@@ -1,6 +1,52 @@
-# Omni Pilot
+# OmniPilot - AI-Powered Raycast Extension
 
-OmniPilot is your all-in-one AI copilot for Raycast. It connects to top free and paid LLMs via OpenRouter to help you ask questions, analyze screen content, summarize text, translate, improve code, and more — all directly from your desktop. Stay focused, work smarter, and bring AI everywhere you need it.
+OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs via OpenRouter, OpenAI and any OpenAI-compatible endpoint to help you ask questions, translate text, analyze content, and more — all directly from your desktop. Stay focused, work smarter, and bring AI everywhere you need it.
+
+## Features
+
+### ⚙️ Multi-Provider Support
+- **OpenRouter**: Access to multiple AI models through a single API
+- **OpenAI**: Direct integration with GPT models  
+- Automatic provider detection and configuration
+
+## Installation & Setup
+
+1. Install the extension in Raycast
+2. Configure your API credentials in preferences:
+   - **API Key**: Your API key for the chosen provider
+   - **Custom API URL**: The base URL for your AI provider  
+   - **Custom Model**: The specific model to use (optional)
+3. Start using the commands!
+
+### Provider Configuration Examples
+
+#### OpenRouter (By default)
+```
+API Key: your-openrouter-key
+Custom API URL: https://openrouter.ai/api/v1
+Custom Model: anthropic/claude-3-haiku (optional)
+```
+
+#### OpenAI
+```
+API Key: your-openai-key  
+Custom API URL: https://api.openai.com/v1
+Custom Model: gpt-4o-mini (optional)
+```
+
+## Commands
+
+- **Ask AI** (`ask`): Ask questions to AI with streaming responses
+- **Translate Text** (`translate`): Translate text between languages
+
+## Architecture
+
+Built with a modular, type-safe architecture:
+- **Real-time Streaming**: Natural incremental responses
+- **Multi-Provider Support**: Easy switching between AI services  
+- **Type Safety**: Full TypeScript support
+- **Error Handling**: Comprehensive error management
+- **Memory Efficient**: Optimized streaming implementation
 
 
 ## Models:

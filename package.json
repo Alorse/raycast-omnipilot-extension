@@ -43,11 +43,11 @@
   "preferences": [
     {
       "name": "openrouterApiKey",
-      "title": "OpenRouter API Key",
-      "description": "Your OpenRouter API key to access AI models",
+      "title": "API Key",
+      "description": "Your API key to access AI models",
       "type": "password",
       "required": true,
-      "placeholder": "Enter your OpenRouter API key"
+      "placeholder": "Enter your API key"
     },
     {
       "name": "defaultModel",
