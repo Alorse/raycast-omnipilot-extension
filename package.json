@@ -48,6 +48,51 @@
       "type": "password",
       "required": true,
       "placeholder": "Enter your OpenRouter API key"
+    },
+    {
+      "name": "defaultModel",
+      "title": "Model",
+      "description": "Which model for Raycast uses by default (unless overriden by Custom Model).",
+      "type": "dropdown",
+      "required": false,
+      "default": "gemini-2.0-flash",
+      "data": [
+        {
+          "title": "OpenAI: GPT-4o-mini",
+          "value": "openai/gpt-4o-mini"
+        },
+        {
+          "title": "Google: Gemini 2.0 Flash Lite",
+          "value": "google/gemini-2.0-flash-lite-001"
+        },
+        {
+          "title": "Anthropic: Claude 3 Haiku",
+          "value": "anthropic/claude-3-haiku"
+        },
+        {
+          "title": "DeepSeek: DeepSeek V3",
+          "value": "deepseek/deepseek-chat-v3-0324"
+        },
+        {
+          "title": "Mistral: Ministral 3B",
+          "value": "mistralai/ministral-3b"
+        },
+        {
+          "title": "Qwen: QwQ 32B",
+          "value": "qwen/qwq-32b"
+        },
+        {
+          "title": "Meta: Llama 3.2 3B Instruct",
+          "value": "meta-llama/llama-3.2-3b-instruct"
+        }
+      ]
+    },
+    {
+      "name": "customModel",
+      "title": "Custom Model",
+      "description": "Custom model in case you use a special model that is not listed in the dropdown. It will override the default model. Keep this empty if you don't have a custom model.",
+      "type": "textfield",
+      "required": false
     }
   ],
   "dependencies": {
