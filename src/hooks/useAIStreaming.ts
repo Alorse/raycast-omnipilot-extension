@@ -1,0 +1,81 @@
+import { useState, useCallback } from "react";
+import { getPreferenceValues, showToast, Toast } from "@raycast/api";
+import { Preferences } from "../types";
+import { createOpenRouterService } from "../services/openrouter";
+
+interface UseAIStreamingResult {
+  response: string;
+  isLoading: boolean;
+  error: string | null;
+  askAI: (query: string, customPrompt?: string, customModel?: string) => Promise<void>;
+  clearResponse: () => void;
+}
+
+/**
+ * Custom hook for streaming AI responses
+ * Provides an easy interface to interact with OpenRouter API
+ */
+export function useAIStreaming(): UseAIStreamingResult {
+  const [response, setResponse] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const preferences = getPreferenceValues<Preferences>();
+
+  const askAI = useCallback(async (
+    query: string, 
+    customPrompt?: string, 
+    customModel?: string
+  ) => {
+    if (!query.trim()) {
+      showToast(Toast.Style.Failure, "Please provide a query");
+      setError("No query provided");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setResponse(""); // Clear previous response
+
+    try {
+      const openRouterService = createOpenRouterService(preferences);
+      
+      await openRouterService.askAI(
+        query,
+        customPrompt || preferences.prompt,
+        customModel || preferences.defaultModel,
+        {
+          onChunk: (content) => {
+            setResponse((prev) => prev + content);
+          },
+          onError: (apiError) => {
+            console.error("Error calling OpenRouter API:", apiError);
+            setError(apiError.message);
+            showToast(Toast.Style.Failure, "Failed to get AI response", apiError.message);
+            setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");
+          }
+        }
+      );
+    } catch (catchError) {
+      const errorMessage = catchError instanceof Error ? catchError.message : String(catchError);
+      console.error("Error in askAI:", catchError);
+      setError(errorMessage);
+      showToast(Toast.Style.Failure, "Failed to get AI response", errorMessage);
+      setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [preferences]);
+
+  const clearResponse = useCallback(() => {
+    setResponse("");
+    setError(null);
+  }, []);
+
+  return {
+    response,
+    isLoading,
+    error,
+    askAI,
+    clearResponse,
+  };
+}
