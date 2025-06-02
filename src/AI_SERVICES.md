@@ -23,6 +23,7 @@ The service automatically detects and adapts to different AI providers:
 ### Configuration
 
 Use the extension preferences to configure:
+
 - **API Key**: Your provider's API key
 - **Custom API URL**: Override the default OpenRouter URL (e.g., `https://api.openai.com/v1`)
 - **Custom Model**: Use when specifying a custom API URL (e.g., `gpt-4o-mini`)
@@ -42,12 +43,7 @@ function MyComponent() {
     askAI("What is the capital of France?");
   };
 
-  return (
-    <Detail 
-      isLoading={isLoading} 
-      markdown={response} 
-    />
-  );
+  return <Detail isLoading={isLoading} markdown={response} />;
 }
 ```
 
@@ -61,16 +57,11 @@ const preferences = getPreferenceValues();
 const service = createAIService(preferences);
 const model = getModelToUse(preferences);
 
-await service.askAI(
-  "Your question here",
-  "Your system prompt",
-  model,
-  {
-    onChunk: (content) => console.log(content),
-    onComplete: (fullResponse) => console.log("Complete:", fullResponse),
-    onError: (error) => console.error(error)
-  }
-);
+await service.askAI("Your question here", "Your system prompt", model, {
+  onChunk: (content) => console.log(content),
+  onComplete: (fullResponse) => console.log("Complete:", fullResponse),
+  onError: (error) => console.error(error),
+});
 ```
 
 ## Configuration Examples
@@ -78,6 +69,7 @@ await service.askAI(
 ### Using OpenAI API
 
 In Raycast preferences:
+
 - **API Key**: `sk-...` (your OpenAI API key)
 - **Custom API URL**: `https://api.openai.com/v1`
 - **Custom Model**: `gpt-4o-mini`
@@ -85,6 +77,7 @@ In Raycast preferences:
 ### Using OpenRouter (Default)
 
 In Raycast preferences:
+
 - **API Key**: `sk-or-...` (your OpenRouter API key)
 - **Custom API URL**: _(leave empty)_
 - **Custom Model**: _(leave empty)_

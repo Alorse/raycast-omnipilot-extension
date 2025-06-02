@@ -38,6 +38,13 @@
       "subtitle": "Translate Text",
       "description": "Translate selected content into your preferred language instantly.",
       "mode": "view"
+    },
+    {
+      "name": "command-history",
+      "title": "Command History",
+      "subtitle": "View History",
+      "description": "View and manage your AI command history.",
+      "mode": "view"
     }
   ],
   "preferences": [
