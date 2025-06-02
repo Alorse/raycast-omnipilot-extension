@@ -88,9 +88,18 @@
       ]
     },
     {
+      "name": "customApiUrl",
+      "title": "API URL",
+      "description": "Custom API URL for Omni Pilot.\nNOTE: If you set a custom API URL, you MUST also provide a Custom Model below.\nThis is useful if you use another LLM provider. It will override the default API URL.\nLeave this empty if you want to use OpenRouter's standard API.",
+      "placeholder": "https://api.openai.com/v1",
+      "type": "textfield",
+      "required": false
+    },
+    {
       "name": "customModel",
       "title": "Custom Model",
-      "description": "Custom model in case you use a special model that is not listed in the dropdown. It will override the default model. Keep this empty if you don't have a custom model.",
+      "description": "Custom model name to use with your API URL.\nREQUIRED if you specified a custom API URL above.\nLeave this empty if you're using OpenRouter's standard models from the dropdown.",
+      "placeholder": "gpt-4o-mini",
       "type": "textfield",
       "required": false
     }
