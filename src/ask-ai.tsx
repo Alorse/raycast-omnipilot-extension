@@ -6,14 +6,6 @@ interface Preferences {
   prompt: string;
 }
 
-interface OpenRouterResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
-
 interface Arguments {
   query: string;
 }
@@ -52,6 +44,7 @@ export default function AskAI(props: { arguments: Arguments }) {
               content: question,
             },
           ],
+          stream: true,
         }),
       });
 
@@ -59,12 +52,58 @@ export default function AskAI(props: { arguments: Arguments }) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json() as OpenRouterResponse;
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Response body is not readable');
+      }
       
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        setResponse(data.choices[0].message.content);
-      } else {
-        throw new Error("Invalid response format from API");
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullResponse = '';
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          // Append new chunk to buffer
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Process complete lines from buffer
+          while (true) {
+            const lineEnd = buffer.indexOf('\n');
+            if (lineEnd === -1) break;
+            
+            const line = buffer.slice(0, lineEnd).trim();
+            buffer = buffer.slice(lineEnd + 1);
+            
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') break;
+              
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content;
+                if (content) {
+                  fullResponse += content;
+                  // setResponse((response) => response + content);
+                  setResponse(fullResponse);
+
+                }
+              } catch {
+                // Ignore invalid JSON
+              }
+            }
+          }
+        }
+      } finally {
+        reader.cancel();
+      }
+      
+      // Ensure we have some response
+      if (!fullResponse) {
+        throw new Error("No content received from stream");
       }
     } catch (error) {
       console.error("Error calling OpenRouter API:", error);
@@ -87,7 +126,7 @@ export default function AskAI(props: { arguments: Arguments }) {
   return (
     <Detail
       isLoading={isLoading}
-      markdown={response || "Processing your query..."}
+      markdown={response}
       metadata={
         <Detail.Metadata>
           <Detail.Metadata.Label title="Query" text={userQuery || "No query provided"} />
