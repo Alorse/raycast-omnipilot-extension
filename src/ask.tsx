@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Detail, getPreferenceValues } from "@raycast/api";
 import { Preferences } from "./types";
 import { useAIStreaming } from "./hooks/useAIStreaming";
+import { getModelToUse } from "./services/openrouter";
 
 interface Arguments {
   query: string;
@@ -12,6 +13,12 @@ export default function AskAI(props: { arguments: Arguments }) {
   const userQuery = props.arguments.query;
   const hasExecutedRef = useRef(false);
   const { response, isLoading, askAI } = useAIStreaming();
+  
+  // Get the model and API info to display
+  const modelToUse = getModelToUse(preferences);
+  const apiProvider = preferences.customApiUrl ? 
+    new URL(preferences.customApiUrl).hostname : 
+    'openrouter.ai';
 
   useEffect(() => {
     // Prevent double execution in React Strict Mode
@@ -31,7 +38,8 @@ export default function AskAI(props: { arguments: Arguments }) {
       metadata={
         <Detail.Metadata>
           <Detail.Metadata.Label title="Query" text={userQuery || "No query provided"} />
-          <Detail.Metadata.Label title="Model" text={preferences.defaultModel} />
+          <Detail.Metadata.Label title="Model" text={modelToUse} />
+          <Detail.Metadata.Label title="API Provider" text={apiProvider} />
         </Detail.Metadata>
       }
     />

@@ -3,6 +3,7 @@ export interface Preferences {
   prompt: string;
   defaultModel: string;
   customModel: string;
+  customApiUrl: string;
 }
 
 export interface OpenRouterMessage {

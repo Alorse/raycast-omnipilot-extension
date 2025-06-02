@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import { Preferences } from "../types";
-import { createOpenRouterService } from "../services/openrouter";
+import { createAIService, getModelToUse } from "../services/openrouter";
 
 interface UseAIStreamingResult {
   response: string;
@@ -37,18 +37,19 @@ export function useAIStreaming(): UseAIStreamingResult {
     setResponse(""); // Clear previous response
 
     try {
-      const openRouterService = createOpenRouterService(preferences);
+      const aiService = createAIService(preferences);
+      const modelToUse = getModelToUse(preferences);
       
-      await openRouterService.askAI(
+      await aiService.askAI(
         query,
         customPrompt || preferences.prompt,
-        customModel || preferences.defaultModel,
+        customModel || modelToUse,
         {
-          onChunk: (content) => {
+          onChunk: (content: string) => {
             setResponse((prev) => prev + content);
           },
-          onError: (apiError) => {
-            console.error("Error calling OpenRouter API:", apiError);
+          onError: (apiError: Error) => {
+            console.error("Error calling AI API:", apiError);
             setError(apiError.message);
             showToast(Toast.Style.Failure, "Failed to get AI response", apiError.message);
             setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");

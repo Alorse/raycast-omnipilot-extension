@@ -2,14 +2,16 @@ import { OpenRouterMessage, Preferences, StreamingOptions } from '../types';
 import { processStreamingResponse } from '../utils/streaming';
 
 /**
- * OpenRouter API service for making streaming chat completions
+ * AI API service for making streaming chat completions
+ * Supports OpenRouter, OpenAI, Anthropic, and other compatible APIs
  */
-export class OpenRouterService {
+export class AIService {
   private apiKey: string;
-  private baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
+  private baseUrl: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, baseUrl?: string) {
     this.apiKey = apiKey;
+    this.baseUrl = baseUrl || 'https://openrouter.ai/api/v1';
   }
 
   /**
@@ -25,7 +27,7 @@ export class OpenRouterService {
     options: StreamingOptions = {}
   ): Promise<string> {
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -84,8 +86,40 @@ export class OpenRouterService {
 }
 
 /**
- * Factory function to create OpenRouter service from preferences
+ * Factory function to create AI service from preferences
+ * Automatically detects if custom API URL and model are provided
  */
-export function createOpenRouterService(preferences: Preferences): OpenRouterService {
-  return new OpenRouterService(preferences.openrouterApiKey);
+export function createAIService(preferences: Preferences): AIService {
+  const apiKey = preferences.openrouterApiKey;
+  
+  // Use custom API URL if provided, otherwise default to OpenRouter
+  const apiUrl = preferences.customApiUrl || 'https://openrouter.ai/api/v1';
+  
+  return new AIService(apiKey, apiUrl);
 }
+
+/**
+ * Get the appropriate model to use based on preferences
+ * @param preferences - User preferences
+ * @returns The model string to use
+ */
+export function getModelToUse(preferences: Preferences): string {
+  // If custom model is provided and custom API URL is set, use the custom model
+  if (preferences.customModel && preferences.customApiUrl) {
+    return preferences.customModel;
+  }
+  
+  // Otherwise use the default model
+  return preferences.defaultModel;
+}
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use createAIService instead
+ */
+export function createOpenRouterService(preferences: Preferences): AIService {
+  return createAIService(preferences);
+}
+
+// Re-export for backward compatibility
+export { AIService as OpenRouterService };
