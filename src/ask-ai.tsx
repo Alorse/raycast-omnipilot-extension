@@ -4,6 +4,8 @@ import { Detail, getPreferenceValues, showToast, Toast } from "@raycast/api";
 interface Preferences {
   openrouterApiKey: string;
   prompt: string;
+  defaultModel: string;
+  customModel: string;
 }
 
 interface Arguments {
@@ -34,7 +36,7 @@ export default function AskAI(props: { arguments: Arguments }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-chat:free',
+          model: preferences.defaultModel,
           messages: [
             {
               role: 'system',
@@ -129,7 +131,7 @@ export default function AskAI(props: { arguments: Arguments }) {
       metadata={
         <Detail.Metadata>
           <Detail.Metadata.Label title="Query" text={userQuery || "No query provided"} />
-          <Detail.Metadata.Label title="Model" text="deepseek/deepseek-chat:free" />
+          <Detail.Metadata.Label title="Model" text={preferences.defaultModel} />
         </Detail.Metadata>
       }
     />
