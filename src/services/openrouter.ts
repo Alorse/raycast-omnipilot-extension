@@ -1,5 +1,5 @@
-import { OpenRouterMessage, Preferences, StreamingOptions } from '../types';
-import { processStreamingResponse } from '../utils/streaming';
+import { OpenRouterMessage, Preferences, StreamingOptions } from "../types";
+import { processStreamingResponse } from "../utils/streaming";
 
 /**
  * AI API service for making streaming chat completions
@@ -11,7 +11,7 @@ export class AIService {
 
   constructor(apiKey: string, baseUrl?: string) {
     this.apiKey = apiKey;
-    this.baseUrl = baseUrl || 'https://openrouter.ai/api/v1';
+    this.baseUrl = baseUrl || "https://openrouter.ai/api/v1";
   }
 
   /**
@@ -24,14 +24,14 @@ export class AIService {
   async streamChatCompletion(
     messages: OpenRouterMessage[],
     model: string,
-    options: StreamingOptions = {}
+    options: StreamingOptions = {},
   ): Promise<string> {
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           model,
@@ -64,19 +64,14 @@ export class AIService {
    * @param model - Model to use
    * @param options - Streaming options
    */
-  async askAI(
-    query: string,
-    systemPrompt: string,
-    model: string,
-    options: StreamingOptions = {}
-  ): Promise<string> {
+  async askAI(query: string, systemPrompt: string, model: string, options: StreamingOptions = {}): Promise<string> {
     const messages: OpenRouterMessage[] = [
       {
-        role: 'system',
+        role: "system",
         content: systemPrompt,
       },
       {
-        role: 'user',
+        role: "user",
         content: query,
       },
     ];
@@ -91,10 +86,10 @@ export class AIService {
  */
 export function createAIService(preferences: Preferences): AIService {
   const apiKey = preferences.openrouterApiKey;
-  
+
   // Use custom API URL if provided, otherwise default to OpenRouter
-  const apiUrl = preferences.customApiUrl || 'https://openrouter.ai/api/v1';
-  
+  const apiUrl = preferences.customApiUrl || "https://openrouter.ai/api/v1";
+
   return new AIService(apiKey, apiUrl);
 }
 
@@ -108,7 +103,7 @@ export function getModelToUse(preferences: Preferences): string {
   if (preferences.customModel && preferences.customApiUrl) {
     return preferences.customModel;
   }
-  
+
   // Otherwise use the default model
   return preferences.defaultModel;
 }

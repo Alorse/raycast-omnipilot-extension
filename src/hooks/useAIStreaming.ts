@@ -21,30 +21,23 @@ export function useAIStreaming(): UseAIStreamingResult {
   const [error, setError] = useState<string | null>(null);
   const preferences = getPreferenceValues<Preferences>();
 
-  const askAI = useCallback(async (
-    query: string, 
-    customPrompt?: string, 
-    customModel?: string
-  ) => {
-    if (!query.trim()) {
-      showToast(Toast.Style.Failure, "Please provide a query");
-      setError("No query provided");
-      return;
-    }
+  const askAI = useCallback(
+    async (query: string, customPrompt?: string, customModel?: string) => {
+      if (!query.trim()) {
+        showToast(Toast.Style.Failure, "Please provide a query");
+        setError("No query provided");
+        return;
+      }
 
-    setIsLoading(true);
-    setError(null);
-    setResponse(""); // Clear previous response
+      setIsLoading(true);
+      setError(null);
+      setResponse(""); // Clear previous response
 
-    try {
-      const aiService = createAIService(preferences);
-      const modelToUse = getModelToUse(preferences);
-      
-      await aiService.askAI(
-        query,
-        customPrompt || preferences.prompt,
-        customModel || modelToUse,
-        {
+      try {
+        const aiService = createAIService(preferences);
+        const modelToUse = getModelToUse(preferences);
+
+        await aiService.askAI(query, customPrompt || preferences.prompt, customModel || modelToUse, {
           onChunk: (content: string) => {
             setResponse((prev) => prev + content);
           },
@@ -53,19 +46,20 @@ export function useAIStreaming(): UseAIStreamingResult {
             setError(apiError.message);
             showToast(Toast.Style.Failure, "Failed to get AI response", apiError.message);
             setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");
-          }
-        }
-      );
-    } catch (catchError) {
-      const errorMessage = catchError instanceof Error ? catchError.message : String(catchError);
-      console.error("Error in askAI:", catchError);
-      setError(errorMessage);
-      showToast(Toast.Style.Failure, "Failed to get AI response", errorMessage);
-      setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [preferences]);
+          },
+        });
+      } catch (catchError) {
+        const errorMessage = catchError instanceof Error ? catchError.message : String(catchError);
+        console.error("Error in askAI:", catchError);
+        setError(errorMessage);
+        showToast(Toast.Style.Failure, "Failed to get AI response", errorMessage);
+        setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [preferences],
+  );
 
   const clearResponse = useCallback(() => {
     setResponse("");
