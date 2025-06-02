@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Detail, getPreferenceValues, showToast, Toast } from "@raycast/api";
 
 interface Preferences {
@@ -15,6 +15,7 @@ export default function AskAI(props: { arguments: Arguments }) {
   const [isLoading, setIsLoading] = useState(true);
   const preferences = getPreferenceValues<Preferences>();
   const userQuery = props.arguments.query;
+  const hasExecutedRef = useRef(false); // Ref to prevent double execution
 
   const askAI = async (question: string) => {
     if (!question.trim()) {
@@ -60,7 +61,6 @@ export default function AskAI(props: { arguments: Arguments }) {
       
       const decoder = new TextDecoder();
       let buffer = '';
-      let fullResponse = '';
       
       try {
         while (true) {
@@ -86,10 +86,7 @@ export default function AskAI(props: { arguments: Arguments }) {
                 const parsed = JSON.parse(data);
                 const content = parsed.choices?.[0]?.delta?.content;
                 if (content) {
-                  fullResponse += content;
-                  // setResponse((response) => response + content);
-                  setResponse(fullResponse);
-
+                  setResponse((prev) => prev + content);
                 }
               } catch {
                 // Ignore invalid JSON
@@ -99,11 +96,6 @@ export default function AskAI(props: { arguments: Arguments }) {
         }
       } finally {
         reader.cancel();
-      }
-      
-      // Ensure we have some response
-      if (!fullResponse) {
-        throw new Error("No content received from stream");
       }
     } catch (error) {
       console.error("Error calling OpenRouter API:", error);
@@ -115,13 +107,20 @@ export default function AskAI(props: { arguments: Arguments }) {
   };
 
   useEffect(() => {
+    // Prevent double execution in React Strict Mode
+    if (hasExecutedRef.current) {
+      return;
+    }
     if (userQuery) {
+      // Clear previous response before starting new query
+      setResponse("");
       askAI(userQuery);
+      hasExecutedRef.current = true; // Mark as executed
     } else {
       setResponse("No query provided. Please provide a query as an argument.");
       setIsLoading(false);
     }
-  }, [userQuery]);
+  }, []); // Remove userQuery dependency to prevent re-runs
 
   return (
     <Detail
