@@ -12,7 +12,25 @@
       "title": "Ask AI",
       "subtitle": "Ask AI",
       "description": "Get instant answers to any question using powerful language models.",
-      "mode": "view"
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "query",
+          "placeholder": "Query",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "preferences": [
+        {
+          "name": "prompt",
+          "title": "System Prompt",
+          "description": "The prompt to use for this command.",
+          "type": "textfield",
+          "required": false,
+          "default": "You may be given a text or a query or a picture as input, please provide a detailed and informative response in the same language as the original."
+        }
+      ]
     },
     {
       "name": "translate-text",
@@ -20,6 +38,16 @@
       "subtitle": "Translate Text",
       "description": "Translate selected content into your preferred language instantly.",
       "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "openrouterApiKey",
+      "title": "OpenRouter API Key",
+      "description": "Your OpenRouter API key to access AI models",
+      "type": "password",
+      "required": true,
+      "placeholder": "Enter your OpenRouter API key"
     }
   ],
   "dependencies": {
