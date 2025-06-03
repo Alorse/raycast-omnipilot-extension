@@ -27,9 +27,16 @@ export const DEFAULT_LLMS: Omit<LLMConfig, "id" | "apiKey">[] = [
     isActive: true,
   },
   {
-    name: "OpenAI GPT-4o-mini",
+    name: "OpenAI",
     apiUrl: "https://api.openai.com/v1",
     model: "gpt-4o-mini",
+    isDefault: false,
+    isActive: false,
+  },
+  {
+    name: "Google Gemini",
+    apiUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+    model: "gemini-2.0-flash",
     isDefault: false,
     isActive: false,
   },
