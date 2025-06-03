@@ -34,6 +34,12 @@ export function useAIStreaming(): UseAIStreamingResult {
       setError(null);
       setResponse(""); // Clear previous response
 
+      await showToast({
+        style: Toast.Style.Animated,
+        title: "Waiting for AI response",
+      });
+      const startDate = Date.now();
+
       try {
         const aiService = createAIService(preferences);
         const modelToUse = getModelToUse(preferences);
@@ -63,6 +69,11 @@ export function useAIStreaming(): UseAIStreamingResult {
         setResponse(formattedError);
       } finally {
         setIsLoading(false);
+        await showToast({
+          style: Toast.Style.Success,
+          title: "Response Finished",
+          message: `${(Date.now() - startDate) / 1000} seconds`,
+        });
       }
     },
     [preferences],
