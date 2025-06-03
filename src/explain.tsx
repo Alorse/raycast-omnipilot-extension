@@ -5,7 +5,7 @@ import { CommandTemplate } from "./lib/commandTemplate";
 
 export default function ExplainText() {
   const preferences = getPreferenceValues<Preferences>();
-  const [selectedText, setSelectedText] = useState<string>("");
+  const [selectedText, setSelectedText] = useState<string | null>("");
   const [isLoadingText, setIsLoadingText] = useState(true);
   const { prompt } = preferences;
 
@@ -15,8 +15,9 @@ export default function ExplainText() {
         const selected = await getSelectedText();
         setSelectedText(selected);
       } catch (error) {
-        console.error("Error getting selected text:", error);
-        setSelectedText("");
+        // getSelectedText() throws an error when no text is selected
+        console.log("No text selected:", error);
+        setSelectedText(null);
       } finally {
         setIsLoadingText(false);
       }
@@ -29,17 +30,19 @@ export default function ExplainText() {
     return <Detail isLoading={true} markdown="Getting text to explain..." />;
   }
 
-  if (selectedText && selectedText.trim().length === 0) {
+  if (!selectedText) {
     return (
       <Detail 
-        markdown="❌ **No text to explain**\n\nPlease select some text or provide text as an argument and try again.\n\n**How to use:**\n- Select text and run the command\n- Or provide text directly as an argument" 
+        markdown={`❌ **No text to explain**
+
+Please select some text and try again.
+
+**How to use:**
+- Select text and run the command
+- The selected text will be explained in detail`}
       />
     );
   }
-
-  console.log("Selected Text:", selectedText);
-
-  return null;
 
   return (
     <CommandTemplate
