@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getSelectedText, Detail } from "@raycast/api";
 import { CommandTemplate } from "./lib/commandTemplate";
+import { LLMValidation } from "./components/LLMValidation";
 
 export default function ExplainText() {
   const [selectedText, setSelectedText] = useState<string | null>("");
@@ -42,9 +43,11 @@ Please select some text and try again.
   }
 
   return (
-    <CommandTemplate
-      userQuery={selectedText}
-      customPrompt="Explain the following text as best as you can, using the same language as the original text."
-    />
+    <LLMValidation>
+      <CommandTemplate
+        userQuery={selectedText}
+        customPrompt="Explain the following text as best as you can, using the same language as the original text."
+      />
+    </LLMValidation>
   );
 }

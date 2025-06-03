@@ -20,7 +20,7 @@ export interface LLMConfigFormData {
 
 export const DEFAULT_LLMS: Omit<LLMConfig, "id" | "apiKey">[] = [
   {
-    name: "OpenRouter (Default)",
+    name: "OpenRouter",
     apiUrl: "https://openrouter.ai/api/v1",
     model: "google/gemini-2.0-flash-lite-001",
     isDefault: true,
