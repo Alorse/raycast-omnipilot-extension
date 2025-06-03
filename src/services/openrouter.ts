@@ -41,7 +41,29 @@ export class AIService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to extract error message from response body
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorBody = await response.text();
+          const errorData = JSON.parse(errorBody);
+
+          // Try to extract a more specific error message
+          const specificMessage = extractErrorMessage(errorData);
+          if (specificMessage) {
+            errorMessage = specificMessage;
+          }
+
+          // Add status code context if we have a good message
+          if (specificMessage && response.status !== 200) {
+            errorMessage = `[${response.status}] ${specificMessage}`;
+          }
+        } catch (parseError) {
+          // If we can't parse the error body, keep the default message
+          console.warn("Could not parse error response:", parseError);
+        }
+
+        console.error("Failed to fetch chat completion:", response.status, errorMessage);
+        throw new Error(errorMessage);
       }
 
       const fullResponse = await processStreamingResponse(response, (content) => {
@@ -118,3 +140,60 @@ export function createOpenRouterService(preferences: Preferences): AIService {
 
 // Re-export for backward compatibility
 export { AIService as OpenRouterService };
+
+/**
+ * Extract error message from different API error response formats
+ * @param errorData - The parsed JSON error response
+ * @returns A human-readable error message
+ */
+function extractErrorMessage(errorData: unknown): string | null {
+  if (!errorData || typeof errorData !== "object") {
+    return null;
+  }
+
+  const data = errorData as Record<string, unknown>;
+
+  // Handle OpenRouter error format
+  if (typeof data.message === "string") {
+    return data.message;
+  }
+
+  // Handle OpenAI error format
+  if (data.error && typeof data.error === "object") {
+    const error = data.error as Record<string, unknown>;
+    if (typeof error.message === "string") {
+      return error.message;
+    }
+
+    // Handle Anthropic error format
+    if (typeof error.type === "string" && typeof error.message === "string") {
+      return `${error.type}: ${error.message}`;
+    }
+  }
+
+  // Handle generic error formats
+  if (typeof data.detail === "string") {
+    return data.detail;
+  }
+
+  if (typeof data.msg === "string") {
+    return data.msg;
+  }
+
+  // Last resort: look for any string field that might be an error message
+  const possibleMessages = Object.values(data)
+    .filter((value): value is string => typeof value === "string" && value.length > 0 && value.length < 300)
+    .filter((message) => {
+      const lowerMessage = message.toLowerCase();
+      return (
+        lowerMessage.includes("error") ||
+        lowerMessage.includes("fail") ||
+        lowerMessage.includes("not found") ||
+        lowerMessage.includes("invalid") ||
+        lowerMessage.includes("unauthorized") ||
+        lowerMessage.includes("forbidden")
+      );
+    });
+
+  return possibleMessages.length > 0 ? possibleMessages[0] : null;
+}

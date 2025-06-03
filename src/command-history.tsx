@@ -146,16 +146,8 @@ ${entry.response}`}
             actions={
               <ActionPanel>
                 <ActionPanel.Section title="Copy Actions">
-                  <Action.CopyToClipboard
-                    title="Copy Response"
-                    content={entry.response}
-                    icon={Icon.Clipboard}
-                  />
-                  <Action.CopyToClipboard
-                    title="Copy Prompt"
-                    content={entry.prompt}
-                    icon={Icon.Document}
-                  />
+                  <Action.CopyToClipboard title="Copy Response" content={entry.response} icon={Icon.Clipboard} />
+                  <Action.CopyToClipboard title="Copy Prompt" content={entry.prompt} icon={Icon.Document} />
                   <Action.CopyToClipboard
                     title="Copy Full Conversation"
                     content={`**Prompt:** ${entry.prompt}\n\n**Response:** ${entry.response}`}

@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import { Preferences } from "../types";
 import { createAIService, getModelToUse } from "../services/openrouter";
+import { formatErrorMessage } from "../utils/errorFormatter";
 
 interface UseAIStreamingResult {
   response: string;
@@ -45,7 +46,10 @@ export function useAIStreaming(): UseAIStreamingResult {
             console.error("Error calling AI API:", apiError);
             setError(apiError.message);
             showToast(Toast.Style.Failure, "Failed to get AI response", apiError.message);
-            setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");
+            
+            // Format error message with helpful context
+            const formattedError = formatErrorMessage(apiError.message);
+            setResponse(formattedError);
           },
         });
       } catch (catchError) {
@@ -53,7 +57,10 @@ export function useAIStreaming(): UseAIStreamingResult {
         console.error("Error in askAI:", catchError);
         setError(errorMessage);
         showToast(Toast.Style.Failure, "Failed to get AI response", errorMessage);
-        setResponse("Sorry, I couldn't process your request. Please check your API key and try again.");
+        
+        // Format error message with helpful context
+        const formattedError = formatErrorMessage(errorMessage);
+        setResponse(formattedError);
       } finally {
         setIsLoading(false);
       }
