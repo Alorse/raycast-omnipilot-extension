@@ -25,6 +25,7 @@ export function CommandTemplate({
   const hasExecutedRef = useRef(false);
   const { response, isLoading, askAI } = useAIStreaming();
   const { addToHistory } = useCommandHistory();
+  const query = userQuery || customPrompt;
 
   // Get the model and API info to display
   const modelToUse = customModel || getModelToUse(preferences);
@@ -37,29 +38,29 @@ export function CommandTemplate({
     if (hasExecutedRef.current) {
       return;
     }
-    if (userQuery) {
-      askAI(userQuery, customPrompt, customModel);
+    if (query) {
+      askAI(query, customPrompt, customModel);
       hasExecutedRef.current = true;
     }
   }, []);
 
   // Save to history when response is complete
   useEffect(() => {
-    if (response && !isLoading && userQuery) {
-      addToHistory(userQuery, response, modelToUse, apiProvider);
+    if (response && !isLoading && query) {
+      addToHistory(query, response, modelToUse, apiProvider);
     }
-  }, [response, isLoading, userQuery, modelToUse, apiProvider, addToHistory]);
+  }, [response, isLoading, query, modelToUse, apiProvider, addToHistory]);
 
   return (
     <Detail
       isLoading={isLoading}
       markdown={
         response ||
-        (userQuery ? "" : "No query provided. Please provide a query as an argument.")
+        (query ? "" : "No query provided. Please provide a query as an argument.")
       }
       metadata={
         <Detail.Metadata>
-          <Detail.Metadata.Label title="Query" text={userQuery || "No query provided"} />
+          <Detail.Metadata.Label title="Query" text={query || "No query provided"} />
           <Detail.Metadata.Label title="Model" text={modelToUse} />
           <Detail.Metadata.Label title="API Provider" text={apiProvider} />
         </Detail.Metadata>
