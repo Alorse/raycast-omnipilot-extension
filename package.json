@@ -73,6 +73,22 @@
       ]
     },
     {
+      "name": "explain",
+      "title": "Explain",
+      "description": "Explain Selected Text",
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "prompt",
+          "title": "System Prompt",
+          "description": "The prompt to use for this command.",
+          "type": "textfield",
+          "required": false,
+          "default": "Explain the following text as best as you can, using the same language as the original text."
+        }
+      ]
+    },
+    {
       "name": "command-history",
       "title": "Command History",
       "subtitle": "View History",
