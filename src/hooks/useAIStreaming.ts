@@ -46,7 +46,7 @@ export function useAIStreaming(): UseAIStreamingResult {
             console.error("Error calling AI API:", apiError);
             setError(apiError.message);
             showToast(Toast.Style.Failure, "Failed to get AI response", apiError.message);
-            
+
             // Format error message with helpful context
             const formattedError = formatErrorMessage(apiError.message);
             setResponse(formattedError);
@@ -57,7 +57,7 @@ export function useAIStreaming(): UseAIStreamingResult {
         console.error("Error in askAI:", catchError);
         setError(errorMessage);
         showToast(Toast.Style.Failure, "Failed to get AI response", errorMessage);
-        
+
         // Format error message with helpful context
         const formattedError = formatErrorMessage(errorMessage);
         setResponse(formattedError);
