@@ -25,7 +25,7 @@ export function CommandTemplate({
   const hasExecutedRef = useRef(false);
   const { response, isLoading, askAI } = useAIStreaming();
   const { addToHistory } = useCommandHistory();
-  const query = userQuery || customPrompt;
+  const query = customPrompt ? `${customPrompt}: ${userQuery}` : userQuery;
 
   // Get the model and API info to display
   const modelToUse = customModel || getModelToUse(preferences);

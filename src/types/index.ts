@@ -4,6 +4,8 @@ export interface Preferences {
   defaultModel: string;
   customModel: string;
   customApiUrl: string;
+  defaultTargetLanguage: string;
+  secondTargetLanguage: string;
 }
 
 export interface OpenRouterMessage {
