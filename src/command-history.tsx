@@ -110,12 +110,12 @@ export default function CommandHistory() {
             subtitle={formatRelativeDate(entry.timestamp)}
             detail={
               <List.Item.Detail
-                markdown={`## 🔸 User Query
-\`\`\`
+                markdown={`## 👤 User Query
+\`
 ${entry.prompt}
-\`\`\`
+\`
 
-## 🤖 AI Response
+## 🤖 Response
 ${entry.response}`}
                 metadata={
                   <List.Item.Detail.Metadata>
@@ -158,7 +158,7 @@ ${entry.response}`}
                   />
                   <Action.CopyToClipboard
                     title="Copy Full Conversation"
-                    content={`**Prompt:** ${entry.prompt}\n\n**Response:** ${entry.response}\n\n**Model:** ${entry.model}\n**Provider:** ${getProviderName(entry.provider)}\n**Time:** ${formatDetailDate(entry.timestamp)}`}
+                    content={`**Prompt:** ${entry.prompt}\n\n**Response:** ${entry.response}`}
                     icon={Icon.CopyClipboard}
                   />
                 </ActionPanel.Section>
