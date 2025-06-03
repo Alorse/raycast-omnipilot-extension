@@ -10,3 +10,7 @@ export * from "../utils/streaming";
 // Re-export hooks
 export * from "../hooks/useAIStreaming";
 export * from "../hooks/useCommandHistory";
+
+// Re-export templates
+export * from "./commandTemplate";
+export * from "../hooks/useCommandHistory";
