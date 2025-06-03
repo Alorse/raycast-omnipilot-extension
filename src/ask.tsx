@@ -43,7 +43,7 @@ export default function AskAI(props: { arguments: Arguments }) {
       isLoading={isLoading}
       markdown={
         response ||
-        (userQuery ? "Processing your query..." : "No query provided. Please provide a query as an argument.")
+        (userQuery ? "" : "No query provided. Please provide a query as an argument.")
       }
       metadata={
         <Detail.Metadata>
