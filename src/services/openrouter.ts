@@ -1,5 +1,6 @@
-import { OpenRouterMessage, Preferences, StreamingOptions } from "../types";
+import { OpenRouterMessage, StreamingOptions } from "../types";
 import { processStreamingResponse } from "../utils/streaming";
+import { LLMConfigManager } from "./llmConfigManager";
 
 /**
  * AI API service for making streaming chat completions
@@ -103,43 +104,37 @@ export class AIService {
 }
 
 /**
- * Factory function to create AI service from preferences
- * Automatically detects if custom API URL and model are provided
+ * Initialize default LLM configurations if none exist
  */
-export function createAIService(preferences: Preferences): AIService {
-  const apiKey = preferences.openrouterApiKey;
+export async function createAIServiceFromConfig(): Promise<AIService> {
+  const activeConfig = await LLMConfigManager.getActiveLLM();
 
-  // Use custom API URL if provided, otherwise default to OpenRouter
-  const apiUrl = preferences.customApiUrl || "https://openrouter.ai/api/v1";
-
-  return new AIService(apiKey, apiUrl);
-}
-
-/**
- * Get the appropriate model to use based on preferences
- * @param preferences - User preferences
- * @returns The model string to use
- */
-export function getModelToUse(preferences: Preferences): string {
-  // If custom model is provided and custom API URL is set, use the custom model
-  if (preferences.customModel && preferences.customApiUrl) {
-    return preferences.customModel;
+  if (activeConfig && activeConfig.apiKey) {
+    return new AIService(activeConfig.apiKey, activeConfig.apiUrl);
   }
 
-  // Otherwise use the default model
-  return preferences.defaultModel;
+  throw new Error("No API configuration found. Please set up an LLM configuration in 'Manage LLMs'.");
 }
 
 /**
- * Legacy function for backward compatibility
- * @deprecated Use createAIService instead
+ * Get the model to use for AI requests
  */
-export function createOpenRouterService(preferences: Preferences): AIService {
-  return createAIService(preferences);
+export async function getActiveModel(): Promise<string> {
+  const activeConfig = await LLMConfigManager.getActiveLLM();
+
+  if (activeConfig && activeConfig.model) {
+    return activeConfig.model;
+  }
+
+  return "openai/gpt-4o";
 }
 
-// Re-export for backward compatibility
-export { AIService as OpenRouterService };
+/**
+ * Initialize default LLM configurations if none exist
+ */
+export async function initializeLLMConfigs(): Promise<void> {
+  await LLMConfigManager.initializeDefaults();
+}
 
 /**
  * Extract error message from different API error response formats

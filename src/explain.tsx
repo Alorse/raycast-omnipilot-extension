@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
-import { getPreferenceValues, getSelectedText, Detail } from "@raycast/api";
-import { Preferences } from "./types";
+import { getSelectedText, Detail } from "@raycast/api";
 import { CommandTemplate } from "./lib/commandTemplate";
 
 export default function ExplainText() {
-  const preferences = getPreferenceValues<Preferences>();
   const [selectedText, setSelectedText] = useState<string | null>("");
   const [isLoadingText, setIsLoadingText] = useState(true);
-  const { prompt } = preferences;
 
   useEffect(() => {
     async function fetchSelectedText() {
@@ -22,7 +19,7 @@ export default function ExplainText() {
         setIsLoadingText(false);
       }
     }
-    
+
     fetchSelectedText();
   }, []);
 
@@ -32,7 +29,7 @@ export default function ExplainText() {
 
   if (!selectedText) {
     return (
-      <Detail 
+      <Detail
         markdown={`❌ **No text to explain**
 
 Please select some text and try again.
@@ -46,9 +43,8 @@ Please select some text and try again.
 
   return (
     <CommandTemplate
-      preferences={preferences}
       userQuery={selectedText}
-      customPrompt={prompt}
+      customPrompt="Explain the following text as best as you can, using the same language as the original text."
     />
   );
 }

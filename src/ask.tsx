@@ -1,18 +1,13 @@
-import { getPreferenceValues } from "@raycast/api";
-import { Preferences } from "./types";
 import { CommandTemplate } from "./lib/commandTemplate";
+import { useInitialization } from "./hooks/useInitialization";
 
 interface Arguments {
   query: string;
 }
 
 export default function AskAI(props: { arguments: Arguments }) {
-  const preferences = getPreferenceValues<Preferences>();
-  
-  return (
-    <CommandTemplate
-      preferences={preferences}
-      userQuery={props.arguments.query}
-    />
-  );
+  // Initialize LLM configurations on first load
+  useInitialization();
+
+  return <CommandTemplate userQuery={props.arguments.query} />;
 }

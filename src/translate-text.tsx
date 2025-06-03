@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { getPreferenceValues, getSelectedText, Detail } from "@raycast/api";
-import { Preferences } from "./types";
+import { getSelectedText, Detail } from "@raycast/api";
 import { CommandTemplate } from "./lib/commandTemplate";
 
 interface Arguments {
@@ -8,12 +7,10 @@ interface Arguments {
 }
 
 export default function TranslateText(props: { arguments: Arguments }) {
-  const preferences = getPreferenceValues<Preferences>();
   const [selectedText, setSelectedText] = useState<string>("");
   const [isLoadingText, setIsLoadingText] = useState(true);
-  
+
   const { TranslateLanguage } = props.arguments;
-  const { prompt, defaultTargetLanguage, secondTargetLanguage } = preferences;
 
   useEffect(() => {
     async function fetchSelectedText() {
@@ -27,7 +24,7 @@ export default function TranslateText(props: { arguments: Arguments }) {
         setIsLoadingText(false);
       }
     }
-    
+
     fetchSelectedText();
   }, []);
 
@@ -39,19 +36,10 @@ export default function TranslateText(props: { arguments: Arguments }) {
     return <Detail markdown="❌ **No text selected**. Please select some text to translate and try again." />;
   }
 
-  // Build the translation prompt based on your logic
+  // Build the translation prompt
   const translationPrompt = TranslateLanguage
-    ? `Translate following text to ${TranslateLanguage}. ${prompt}`
-    : `If the following text is in ${defaultTargetLanguage} then translate it to ${secondTargetLanguage}, otherwise translate ${defaultTargetLanguage}. ${prompt}`;
+    ? `Translate following text to ${TranslateLanguage}. Try to keep all of the words from the given text and maintain the original meaning as closely as possible. ONLY return the translated text and nothing else.`
+    : `If the following text is in English then translate it to Spanish, otherwise translate to English. Try to keep all of the words from the given text and maintain the original meaning as closely as possible. ONLY return the translated text and nothing else.`;
 
-  console.log("Translation Prompt:", translationPrompt);
-  // return null;
-
-  return (
-    <CommandTemplate
-      preferences={preferences}
-      userQuery={selectedText}
-      customPrompt={translationPrompt}
-    />
-  );
+  return <CommandTemplate userQuery={selectedText} customPrompt={translationPrompt} />;
 }

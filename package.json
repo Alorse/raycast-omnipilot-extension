@@ -94,70 +94,13 @@
       "subtitle": "View History",
       "description": "View and manage your AI command history.",
       "mode": "view"
-    }
-  ],
-  "preferences": [
-    {
-      "name": "openrouterApiKey",
-      "title": "API Key",
-      "description": "Your API key to access AI models",
-      "type": "password",
-      "required": true,
-      "placeholder": "Enter your API key"
     },
     {
-      "name": "defaultModel",
-      "title": "Model",
-      "description": "Which model for Raycast uses by default (unless overriden by Custom Model).",
-      "type": "dropdown",
-      "required": false,
-      "default": "gemini-2.0-flash",
-      "data": [
-        {
-          "title": "OpenAI: GPT-4o-mini",
-          "value": "openai/gpt-4o-mini"
-        },
-        {
-          "title": "Google: Gemini 2.0 Flash Lite",
-          "value": "google/gemini-2.0-flash-lite-001"
-        },
-        {
-          "title": "Anthropic: Claude 3 Haiku",
-          "value": "anthropic/claude-3-haiku"
-        },
-        {
-          "title": "DeepSeek: DeepSeek V3",
-          "value": "deepseek/deepseek-chat-v3-0324"
-        },
-        {
-          "title": "Mistral: Ministral 3B",
-          "value": "mistralai/ministral-3b"
-        },
-        {
-          "title": "Qwen: QwQ 32B",
-          "value": "qwen/qwq-32b"
-        },
-        {
-          "title": "Meta: Llama 3.2 3B Instruct",
-          "value": "meta-llama/llama-3.2-3b-instruct"
-        }
-      ]
-    },
-    {
-      "name": "customApiUrl",
-      "title": "API URL",
-      "description": "Custom API URL for Omni Pilot.\nNOTE: If you set a custom API URL, you MUST also provide a Custom Model below.\nThis is useful if you use another LLM provider. It will override the default API URL.\nLeave this empty if you want to use OpenRouter's standard API.",
-      "placeholder": "https://api.openai.com/v1",
-      "type": "textfield",
-      "required": false
-    },
-    {
-      "name": "customModel",
-      "title": "Custom Model",
-      "description": "Custom model name to use with your API URL.\nREQUIRED if you specified a custom API URL above.\nLeave this empty if you're using OpenRouter's standard models from the dropdown.",
-      "placeholder": "gpt-4o-mini",
-      "type": "textfield",
-      "required": false
+      "name": "manage-llms",
+      "title": "Manage Llms",
+      "subtitle": "LLM Config",
+      "description": "Add, edit, and manage your AI language model configurations.",
+      "mode": "view"
     }
   ],
   "dependencies": {

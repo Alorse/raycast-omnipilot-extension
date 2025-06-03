@@ -11,6 +11,24 @@ OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs via
 - Copy responses to clipboard
 - View current model and provider information
 
+### 🔧 Manage LLMs (NEW!)
+- **Dynamic Configuration Management**: Add, edit, and switch between multiple AI providers
+- **Multiple Provider Support**: OpenRouter, OpenAI, Anthropic, and any OpenAI-compatible API
+- **Secure Storage**: API keys stored locally and encrypted
+- **Quick Switching**: Change active LLM configuration with one click
+- **Configuration Templates**: Pre-built setups for popular providers
+
+### 🌐 Translation
+- Translate selected text or manual input
+- Smart language detection
+- Customizable target languages
+- Support for all major languages
+
+### 📖 Explain
+- Explain complex concepts or code
+- Educational prompts optimized for learning
+- Context-aware explanations
+
 ### 📚 Command History
 - Automatically save all AI interactions
 - Search through past conversations
@@ -27,6 +45,19 @@ OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs via
 
 ## Installation & Setup
 
+### Quick Start (Recommended)
+
+1. Install the extension in Raycast
+2. Run "Manage LLMs" command
+3. Add your API configuration:
+   - Choose a provider (OpenRouter, OpenAI, Anthropic, etc.)
+   - Enter your API key
+   - Set as active configuration
+4. Start using any AI command!
+
+### Legacy Setup (Still Supported)
+
+You can still use the traditional preferences method:
 1. Install the extension in Raycast
 2. Configure your API credentials in preferences:
    - **API Key**: Your API key for the chosen provider
@@ -34,21 +65,14 @@ OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs via
    - **Custom Model**: The specific model to use (optional)
 3. Start using the commands!
 
-### Provider Configuration Examples
+### Dynamic LLM Management
 
-#### OpenRouter (By default)
-```
-API Key: your-openrouter-key
-Custom API URL: https://openrouter.ai/api/v1
-Custom Model: anthropic/claude-3-haiku (optional)
-```
-
-#### OpenAI
-```
-API Key: your-openai-key  
-Custom API URL: https://api.openai.com/v1
-Custom Model: gpt-4o-mini (optional)
-```
+The new **Manage LLMs** command provides:
+- **Add Multiple Configurations**: Set up different providers for different use cases
+- **Quick Switching**: Change between configurations without going to preferences
+- **Secure Storage**: API keys stored locally using Raycast's secure storage
+- **Provider Templates**: Built-in templates for popular AI providers
+- **Backup & Fallback**: Automatic fallback to preferences if no dynamic configs exist
 
 ## Commands
 
