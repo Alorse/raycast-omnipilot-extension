@@ -34,12 +34,19 @@ export interface CommandHistoryEntry {
   response: string;
   model: string;
   provider?: string;
+  configName?: string;
 }
 
 export interface UseCommandHistoryResult {
   history: CommandHistoryEntry[];
   isLoading: boolean;
-  addToHistory: (prompt: string, response: string, model: string, provider?: string) => Promise<void>;
+  addToHistory: (
+    prompt: string,
+    response: string,
+    model: string,
+    provider?: string,
+    configName?: string,
+  ) => Promise<void>;
   clearHistory: () => Promise<void>;
   loadHistory: () => Promise<void>;
   removeEntry: (id: string) => Promise<void>;

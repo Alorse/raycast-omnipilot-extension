@@ -76,9 +76,10 @@ export function useCommandHistory(): UseCommandHistoryResult {
    * @param response - The AI's response
    * @param model - The model used for this query
    * @param provider - The AI provider used (optional)
+   * @param configName - The configuration name used (optional)
    */
   const addToHistory = useCallback(
-    async (prompt: string, response: string, model: string, provider?: string): Promise<void> => {
+    async (prompt: string, response: string, model: string, provider?: string, configName?: string): Promise<void> => {
       if (!prompt.trim() || !response.trim()) {
         console.warn("Skipping history entry: prompt or response is empty");
         return;
@@ -92,6 +93,7 @@ export function useCommandHistory(): UseCommandHistoryResult {
           response: response.trim(),
           model,
           provider,
+          configName,
         };
 
         setHistory((currentHistory) => {

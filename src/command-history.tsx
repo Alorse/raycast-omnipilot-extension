@@ -139,6 +139,15 @@ ${entry.response}`}
                         icon={Icon.ComputerChip}
                       />
                     </List.Item.Detail.Metadata.TagList>
+                    {entry.configName && (
+                      <List.Item.Detail.Metadata.TagList title="Configuration">
+                        <List.Item.Detail.Metadata.TagList.Item
+                          text={entry.configName}
+                          color="#34D399"
+                          icon={Icon.Gear}
+                        />
+                      </List.Item.Detail.Metadata.TagList>
+                    )}
                   </List.Item.Detail.Metadata>
                 }
               />
