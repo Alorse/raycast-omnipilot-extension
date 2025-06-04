@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getSelectedText, Detail, showToast, Toast } from "@raycast/api";
+import { getSelectedText, Detail } from "@raycast/api";
 import { CommandTemplate } from "./lib/commandTemplate";
 import { LLMValidation } from "./components/LLMValidation";
 
