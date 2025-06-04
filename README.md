@@ -70,3 +70,10 @@ Built with a modular, type-safe architecture:
 - **Type Safety**: Full TypeScript support
 - **Error Handling**: Comprehensive error management
 - **Memory Efficient**: Optimized streaming implementation
+
+## Known Issues
+
+### Token Usage Tracking
+- **Google Gemini Direct API**: When using Google Gemini directly (not through OpenRouter), token usage information may not be available in the command history. This is due to Google's API not consistently providing usage data in streaming responses.
+- **Workaround**: Use Google Gemini models through OpenRouter for full token tracking support.
+- **Other Providers**: OpenAI, Anthropic, OpenRouter, and most OpenAI-compatible APIs provide complete token usage information.
