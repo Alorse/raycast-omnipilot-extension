@@ -91,7 +91,7 @@ export default function ManageLLMs() {
         {configs.map((config) => (
           <List.Item
             key={config.id}
-            title={config.name}
+            title={`${config.name} ${config.apiKey && config.apiKey.length > 0 ? "" : "⚠️"}`}
             subtitle={config.model}
             icon={{ source: getProviderIcon(config.apiUrl) }}
 
