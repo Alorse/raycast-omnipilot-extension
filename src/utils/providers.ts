@@ -153,7 +153,7 @@ export function detectProvider(input: string): ProviderInfo {
   }
 
   let hostname = input;
-  
+
   // Extract hostname from URL if needed
   try {
     if (input.startsWith("http://") || input.startsWith("https://")) {
@@ -166,7 +166,7 @@ export function detectProvider(input: string): ProviderInfo {
 
   // Find matching provider by hostname
   for (const provider of PROVIDERS) {
-    if (provider.hostnames.some(h => hostname.includes(h.toLowerCase()))) {
+    if (provider.hostnames.some((h) => hostname.includes(h.toLowerCase()))) {
       return provider;
     }
   }
@@ -174,8 +174,7 @@ export function detectProvider(input: string): ProviderInfo {
   // Check for partial matches in provider names (fallback)
   const lowerInput = input.toLowerCase();
   for (const provider of PROVIDERS) {
-    if (lowerInput.includes(provider.name.toLowerCase()) || 
-        lowerInput.includes(provider.id.toLowerCase())) {
+    if (lowerInput.includes(provider.name.toLowerCase()) || lowerInput.includes(provider.id.toLowerCase())) {
       return provider;
     }
   }
@@ -189,7 +188,7 @@ export function detectProvider(input: string): ProviderInfo {
  * @returns ProviderInfo object or default provider if not found
  */
 export function getProviderById(providerId: string): ProviderInfo {
-  const provider = PROVIDERS.find(p => p.id === providerId);
+  const provider = PROVIDERS.find((p) => p.id === providerId);
   return provider || DEFAULT_PROVIDER;
 }
 
@@ -202,7 +201,7 @@ export function getProviderColor(input?: string): string {
   if (!input) {
     return DEFAULT_PROVIDER.color;
   }
-  
+
   const provider = detectProvider(input);
   return provider.color;
 }
@@ -216,7 +215,7 @@ export function getProviderName(input?: string): string {
   if (!input) {
     return DEFAULT_PROVIDER.displayName;
   }
-  
+
   const provider = detectProvider(input);
   return provider.displayName;
 }
@@ -238,7 +237,7 @@ export function getProviderIcon(input?: string): string {
   if (!input) {
     return DEFAULT_PROVIDER.icon || "unknown.svg";
   }
-  
+
   const provider = detectProvider(input);
   return provider.icon || DEFAULT_PROVIDER.icon || "unknown.svg";
 }

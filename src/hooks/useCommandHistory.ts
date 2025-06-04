@@ -80,7 +80,14 @@ export function useCommandHistory(): UseCommandHistoryResult {
    * @param usage - Token usage information (optional)
    */
   const addToHistory = useCallback(
-    async (prompt: string, response: string, model: string, provider?: string, configName?: string, usage?: TokenUsage): Promise<void> => {
+    async (
+      prompt: string,
+      response: string,
+      model: string,
+      provider?: string,
+      configName?: string,
+      usage?: TokenUsage,
+    ): Promise<void> => {
       if (!prompt.trim() || !response.trim()) {
         console.warn("Skipping history entry: prompt or response is empty");
         return;

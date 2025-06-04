@@ -67,7 +67,14 @@ export function CommandTemplate({ userQuery, customPrompt, customModel }: Comman
   // Save to history when response is complete
   useEffect(() => {
     if (response && !isLoading && query && currentConfig) {
-      addToHistory(query, response, currentConfig.model, currentConfig.provider, currentConfig.configName, tokenUsage || undefined);
+      addToHistory(
+        query,
+        response,
+        currentConfig.model,
+        currentConfig.provider,
+        currentConfig.configName,
+        tokenUsage || undefined,
+      );
     }
   }, [response, isLoading, query, currentConfig, tokenUsage, addToHistory]);
 

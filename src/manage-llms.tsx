@@ -94,7 +94,6 @@ export default function ManageLLMs() {
             title={`${config.name} ${config.apiKey && config.apiKey.length > 0 ? "" : "⚠️"} ${activeConfig?.id === config.id ? "🟢" : ""}`}
             subtitle={config.model}
             icon={{ source: getProviderIcon(config.apiUrl) }}
-
             detail={
               <List.Item.Detail
                 markdown={`# ${config.name}
@@ -121,34 +120,22 @@ export default function ManageLLMs() {
                           />
                         )}
                         {config.isDefault && (
-                          <List.Item.Detail.Metadata.TagList.Item
-                            text="Default"
-                            color="#F59E0B"
-                            icon={Icon.Star}
-                          />
+                          <List.Item.Detail.Metadata.TagList.Item text="Default" color="#F59E0B" icon={Icon.Star} />
                         )}
                       </List.Item.Detail.Metadata.TagList>
                     )}
                     <List.Item.Detail.Metadata.Separator />
-                    
-                    <List.Item.Detail.Metadata.Label
-                      title="Model"
-                      text={config.model}
-                      icon={Icon.ComputerChip}
-                    />
-                    
-                    <List.Item.Detail.Metadata.Label
-                      title="API Endpoint"
-                      text={config.apiUrl}
-                      icon={Icon.Globe}
-                    />
-                    
+
+                    <List.Item.Detail.Metadata.Label title="Model" text={config.model} icon={Icon.ComputerChip} />
+
+                    <List.Item.Detail.Metadata.Label title="API Endpoint" text={config.apiUrl} icon={Icon.Globe} />
+
                     <List.Item.Detail.Metadata.Label
                       title="API Key Status"
                       text={config.apiKey && config.apiKey.length > 0 ? "✅ Configured" : "❌ Missing"}
                       icon={config.apiKey && config.apiKey.length > 0 ? Icon.Lock : Icon.ExclamationMark}
                     />
-                    
+
                     {config.createdAt && (
                       <List.Item.Detail.Metadata.Label
                         title="Created"

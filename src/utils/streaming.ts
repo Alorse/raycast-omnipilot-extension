@@ -47,7 +47,7 @@ export async function processStreamingResponse(
               fullResponse += content;
               onChunk(content);
             }
-            
+
             // Check for usage information in the chunk
             if (parsed.usage) {
               usage = parsed.usage;
