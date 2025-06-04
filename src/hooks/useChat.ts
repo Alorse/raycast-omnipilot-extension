@@ -18,20 +18,20 @@ export function useChat() {
   // Load conversations from storage
   const loadConversations = useCallback(async () => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
+      setState((prev) => ({ ...prev, isLoading: true }));
       const stored = await LocalStorage.getItem<string>(CHAT_STORAGE_KEY);
       if (stored) {
         const conversations = JSON.parse(stored) as ChatConversation[];
-        setState(prev => ({ ...prev, conversations, isLoading: false }));
+        setState((prev) => ({ ...prev, conversations, isLoading: false }));
       } else {
-        setState(prev => ({ ...prev, conversations: [], isLoading: false }));
+        setState((prev) => ({ ...prev, conversations: [], isLoading: false }));
       }
     } catch (error) {
       console.error("Failed to load conversations:", error);
-      setState(prev => ({ 
-        ...prev, 
-        error: "Failed to load conversations", 
-        isLoading: false 
+      setState((prev) => ({
+        ...prev,
+        error: "Failed to load conversations",
+        isLoading: false,
       }));
     }
   }, []);
@@ -51,121 +51,124 @@ export function useChat() {
   }, []);
 
   // Create new conversation
-  const createConversation = useCallback(async (title?: string): Promise<ChatConversation> => {
-    try {
-      const activeConfig = await LLMConfigManager.getActiveLLM();
-      
-      if (!activeConfig) {
-        throw new Error("No active LLM configuration found");
+  const createConversation = useCallback(
+    async (title?: string): Promise<ChatConversation> => {
+      try {
+        const activeConfig = await LLMConfigManager.getActiveLLM();
+
+        if (!activeConfig) {
+          throw new Error("No active LLM configuration found");
+        }
+
+        const newConversation: ChatConversation = {
+          id: `chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          title: title || "New Chat",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messages: [],
+          model: activeConfig.model,
+          provider: getProviderName(activeConfig.apiUrl),
+          configName: activeConfig.name,
+          totalTokens: 0,
+        };
+
+        const updatedConversations = [newConversation, ...state.conversations];
+
+        setState((prev) => ({
+          ...prev,
+          currentConversation: newConversation,
+          conversations: updatedConversations,
+        }));
+
+        await saveConversations(updatedConversations);
+        return newConversation;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        setState((prev) => ({ ...prev, error: errorMessage }));
+        throw error;
+      }
+    },
+    [state.conversations, saveConversations],
+  );
+
+  // Add message to current conversation
+  const addMessage = useCallback(
+    async (content: string, role: "user" | "assistant", tokenUsage?: TokenUsage): Promise<void> => {
+      if (!state.currentConversation) {
+        throw new Error("No active conversation");
       }
 
-      const newConversation: ChatConversation = {
-        id: `chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: title || "New Chat",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        messages: [],
-        model: activeConfig.model,
-        provider: getProviderName(activeConfig.apiUrl),
-        configName: activeConfig.name,
-        totalTokens: 0,
+      const newMessage: ChatMessage = {
+        id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        role,
+        content,
+        timestamp: new Date().toISOString(),
+        tokenUsage,
       };
 
-      const updatedConversations = [newConversation, ...state.conversations];
-      
-      setState(prev => ({
+      const updatedConversation = {
+        ...state.currentConversation,
+        messages: [...state.currentConversation.messages, newMessage],
+        updatedAt: new Date().toISOString(),
+        totalTokens: state.currentConversation.totalTokens + (tokenUsage?.total_tokens || 0),
+      };
+
+      // Update title if it's the first user message and title is still "New Chat"
+      if (role === "user" && updatedConversation.title === "New Chat" && updatedConversation.messages.length === 1) {
+        updatedConversation.title = content.length > 50 ? content.substring(0, 50) + "..." : content;
+      }
+
+      const updatedConversations = state.conversations.map((conv) =>
+        conv.id === updatedConversation.id ? updatedConversation : conv,
+      );
+
+      setState((prev) => ({
         ...prev,
-        currentConversation: newConversation,
+        currentConversation: updatedConversation,
         conversations: updatedConversations,
       }));
 
       await saveConversations(updatedConversations);
-      return newConversation;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      setState(prev => ({ ...prev, error: errorMessage }));
-      throw error;
-    }
-  }, [state.conversations, saveConversations]);
-
-  // Add message to current conversation
-  const addMessage = useCallback(async (
-    content: string, 
-    role: "user" | "assistant",
-    tokenUsage?: TokenUsage
-  ): Promise<void> => {
-    if (!state.currentConversation) {
-      throw new Error("No active conversation");
-    }
-
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      role,
-      content,
-      timestamp: new Date().toISOString(),
-      tokenUsage,
-    };
-
-    const updatedConversation = {
-      ...state.currentConversation,
-      messages: [...state.currentConversation.messages, newMessage],
-      updatedAt: new Date().toISOString(),
-      totalTokens: state.currentConversation.totalTokens + (tokenUsage?.total_tokens || 0),
-    };
-
-    // Update title if it's the first user message and title is still "New Chat"
-    if (role === "user" && updatedConversation.title === "New Chat" && updatedConversation.messages.length === 1) {
-      updatedConversation.title = content.length > 50 ? content.substring(0, 50) + "..." : content;
-    }
-
-    const updatedConversations = state.conversations.map(conv => 
-      conv.id === updatedConversation.id ? updatedConversation : conv
-    );
-
-    setState(prev => ({
-      ...prev,
-      currentConversation: updatedConversation,
-      conversations: updatedConversations,
-    }));
-
-    await saveConversations(updatedConversations);
-  }, [state.currentConversation, state.conversations, saveConversations]);
+    },
+    [state.currentConversation, state.conversations, saveConversations],
+  );
 
   // Set current conversation
   const setCurrentConversation = useCallback((conversation: ChatConversation | null) => {
-    setState(prev => ({ ...prev, currentConversation: conversation }));
+    setState((prev) => ({ ...prev, currentConversation: conversation }));
   }, []);
 
   // Delete conversation
-  const deleteConversation = useCallback(async (conversationId: string): Promise<void> => {
-    const updatedConversations = state.conversations.filter(conv => conv.id !== conversationId);
-    
-    setState(prev => ({
-      ...prev,
-      conversations: updatedConversations,
-      currentConversation: prev.currentConversation?.id === conversationId 
-        ? null 
-        : prev.currentConversation,
-    }));
+  const deleteConversation = useCallback(
+    async (conversationId: string): Promise<void> => {
+      const updatedConversations = state.conversations.filter((conv) => conv.id !== conversationId);
 
-    await saveConversations(updatedConversations);
-    
-    showToast({
-      style: Toast.Style.Success,
-      title: "Conversation deleted",
-    });
-  }, [state.conversations, saveConversations]);
+      setState((prev) => ({
+        ...prev,
+        conversations: updatedConversations,
+        currentConversation: prev.currentConversation?.id === conversationId ? null : prev.currentConversation,
+      }));
+
+      await saveConversations(updatedConversations);
+
+      showToast({
+        style: Toast.Style.Success,
+        title: "Conversation deleted",
+      });
+    },
+    [state.conversations, saveConversations],
+  );
 
   // Clear all conversations
   const clearAllConversations = useCallback(async (): Promise<void> => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       conversations: [],
       currentConversation: null,
     }));
 
     await LocalStorage.removeItem(CHAT_STORAGE_KEY);
-    
+
     showToast({
       style: Toast.Style.Success,
       title: "All conversations cleared",
@@ -174,7 +177,7 @@ export function useChat() {
 
   // Get conversation messages for AI context
   const getConversationContext = useCallback((conversation: ChatConversation) => {
-    return conversation.messages.map(msg => ({
+    return conversation.messages.map((msg) => ({
       role: msg.role as "user" | "assistant" | "system",
       content: msg.content,
     }));

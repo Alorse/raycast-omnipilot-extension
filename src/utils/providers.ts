@@ -223,4 +223,3 @@ export function getProviderIcon(input?: string): string {
   const provider = detectProvider(input);
   return provider.icon || DEFAULT_PROVIDER.icon || "unknown.svg";
 }
-

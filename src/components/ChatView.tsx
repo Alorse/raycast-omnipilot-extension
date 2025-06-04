@@ -35,7 +35,7 @@ export function ChatView() {
     getConversationContext,
     deleteConversation,
   } = useChat();
-  
+
   const { response, isLoading, tokenUsage, chatWithHistory, clearResponse } = useAIStreaming();
   const [isInitialized, setIsInitialized] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -45,7 +45,7 @@ export function ChatView() {
     provider: string;
     configName?: string;
   } | null>(null);
-  
+
   const responseStartRef = useRef<string>("");
   const processingResponseRef = useRef(false);
 
@@ -72,7 +72,7 @@ export function ChatView() {
         } else {
           setSelectedConversationId(currentConversation.id);
         }
-        
+
         setIsInitialized(true);
       } catch (error) {
         console.error("Failed to initialize chat:", error);
@@ -93,7 +93,7 @@ export function ChatView() {
       // Only process if response has changed from what we started with
       if (response !== responseStartRef.current && response.trim()) {
         processingResponseRef.current = true;
-        
+
         addMessage(response, "assistant", tokenUsage || undefined)
           .then(() => {
             clearResponse();
@@ -108,88 +108,106 @@ export function ChatView() {
     }
   }, [response, isLoading, tokenUsage, currentConversation, addMessage, clearResponse]);
 
-  const handleSendMessage = useCallback(async (messageText: string) => {
-    const userMessage = messageText.trim();
-    if (!userMessage || !currentConversation || isLoading) return;
+  const handleSendMessage = useCallback(
+    async (messageText: string) => {
+      const userMessage = messageText.trim();
+      if (!userMessage || !currentConversation || isLoading) return;
 
-    try {
-      // Clear the search text immediately
-      setSearchText("");
+      try {
+        // Clear the search text immediately
+        setSearchText("");
 
-      // Add user message
-      await addMessage(userMessage, "user");
+        // Add user message
+        await addMessage(userMessage, "user");
 
-      // Get conversation context for AI and build complete message history
-      const conversationHistory = getConversationContext(currentConversation);
-      
-      // Build the complete message array including system prompt and conversation history
-      const messages: OpenRouterMessage[] = [
-        {
-          role: "system",
-          content: preferences.systemPrompt || "You are a helpful AI assistant. Maintain context from the conversation history and provide thoughtful, relevant responses.",
+        // Get conversation context for AI and build complete message history
+        const conversationHistory = getConversationContext(currentConversation);
+
+        // Build the complete message array including system prompt and conversation history
+        const messages: OpenRouterMessage[] = [
+          {
+            role: "system",
+            content:
+              preferences.systemPrompt ||
+              "You are a helpful AI assistant. Maintain context from the conversation history and provide thoughtful, relevant responses.",
+          },
+          ...conversationHistory,
+          {
+            role: "user",
+            content: userMessage,
+          },
+        ];
+
+        // Start AI response
+        responseStartRef.current = response;
+        processingResponseRef.current = false;
+
+        await chatWithHistory(messages);
+      } catch (error) {
+        console.error("Failed to send message:", error);
+        showToast({
+          style: Toast.Style.Failure,
+          title: "Failed to send message",
+          message: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    },
+    [
+      currentConversation,
+      isLoading,
+      addMessage,
+      getConversationContext,
+      chatWithHistory,
+      response,
+      preferences.systemPrompt,
+    ],
+  );
+
+  const handleConversationChange = useCallback(
+    (conversationId: string) => {
+      const conversation = conversations.find((c) => c.id === conversationId);
+      if (conversation) {
+        setCurrentConversation(conversation);
+        setSelectedConversationId(conversationId);
+      }
+    },
+    [conversations, setCurrentConversation],
+  );
+
+  const handleDeleteConversation = useCallback(
+    async (conversationId: string) => {
+      const confirmed = await confirmAlert({
+        title: "Delete Conversation",
+        message: "Are you sure you want to delete this conversation? This action cannot be undone.",
+        primaryAction: {
+          title: "Delete",
+          style: Alert.ActionStyle.Destructive,
         },
-        ...conversationHistory,
-        {
-          role: "user",
-          content: userMessage,
-        },
-      ];
-
-      // Start AI response
-      responseStartRef.current = response;
-      processingResponseRef.current = false;
-      
-      await chatWithHistory(messages);
-
-    } catch (error) {
-      console.error("Failed to send message:", error);
-      showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to send message",
-        message: error instanceof Error ? error.message : "Unknown error",
       });
-    }
-  }, [currentConversation, isLoading, addMessage, getConversationContext, chatWithHistory, response, preferences.systemPrompt]);
 
-  const handleConversationChange = useCallback((conversationId: string) => {
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (conversation) {
-      setCurrentConversation(conversation);
-      setSelectedConversationId(conversationId);
-    }
-  }, [conversations, setCurrentConversation]);
+      if (confirmed) {
+        await deleteConversation(conversationId);
 
-  const handleDeleteConversation = useCallback(async (conversationId: string) => {
-    const confirmed = await confirmAlert({
-      title: "Delete Conversation",
-      message: "Are you sure you want to delete this conversation? This action cannot be undone.",
-      primaryAction: {
-        title: "Delete",
-        style: Alert.ActionStyle.Destructive,
-      },
-    });
-
-    if (confirmed) {
-      await deleteConversation(conversationId);
-      
-      // Switch to another conversation if the current one was deleted
-      if (currentConversation?.id === conversationId) {
-        const remainingConversations = conversations.filter(c => c.id !== conversationId);
-        if (remainingConversations.length > 0) {
-          setCurrentConversation(remainingConversations[0]);
-          setSelectedConversationId(remainingConversations[0].id);
-        } else {
-          // Create a new conversation if none remain
-          await createConversation();
+        // Switch to another conversation if the current one was deleted
+        if (currentConversation?.id === conversationId) {
+          const remainingConversations = conversations.filter((c) => c.id !== conversationId);
+          if (remainingConversations.length > 0) {
+            setCurrentConversation(remainingConversations[0]);
+            setSelectedConversationId(remainingConversations[0].id);
+          } else {
+            // Create a new conversation if none remain
+            await createConversation();
+          }
         }
       }
-    }
-  }, [currentConversation, conversations, deleteConversation, setCurrentConversation, createConversation]);
+    },
+    [currentConversation, conversations, deleteConversation, setCurrentConversation, createConversation],
+  );
 
   const formatMessageTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -199,7 +217,7 @@ export function ChatView() {
 
   const currentMessages = currentConversation?.messages || [];
   const allMessages = [...currentMessages];
-  
+
   // Add current streaming response as a temporary message
   if (isLoading && response) {
     allMessages.push({
@@ -213,28 +231,26 @@ export function ChatView() {
   // Build chat content as markdown for better readability
   const buildChatMarkdown = () => {
     if (!currentConversation || allMessages.length === 0) {
-      return `# 💬 Chat with ${currentConfig?.model || 'AI'}
+      return `# 💬 Chat with ${currentConfig?.model || "AI"}
 
 *No messages yet. Type your message above and press Enter to start the conversation.*`;
     }
 
-    const chatContent = allMessages.map((message) => {
-      const role = message.role === "user" ? "👤 **You**" : "🤖 **Assistant**";
-      const time = formatMessageTime(message.timestamp);
-      const tokens = message.tokenUsage ? ` *(${message.tokenUsage.total_tokens} tokens)*` : "";
-      
-      return `${role} ${tokens} - ${time}
+    const chatContent = allMessages
+      .map((message) => {
+        const role = message.role === "user" ? "👤 **You**" : "🤖 **Assistant**";
+        const time = formatMessageTime(message.timestamp);
+        const tokens = message.tokenUsage ? ` *(${message.tokenUsage.total_tokens} tokens)*` : "";
+
+        return `${role} ${tokens} - ${time}
 
 ${message.content}
 
 ---`;
-    }).join('\n\n');
+      })
+      .join("\n\n");
 
-    const finalMarkdown = `# 💬 ${currentConversation.title}
-
-${chatContent}`;
-
-    return finalMarkdown;
+    return chatContent;
   };
 
   return (
@@ -251,11 +267,7 @@ ${chatContent}`;
         }
       }}
       searchBarAccessory={
-        <List.Dropdown
-          tooltip="Select Conversation"
-          value={selectedConversationId}
-          onChange={handleConversationChange}
-        >
+        <List.Dropdown tooltip="Select Conversation" value={selectedConversationId} onChange={handleConversationChange}>
           {conversations.map((conversation) => (
             <List.Dropdown.Item
               key={conversation.id}
@@ -268,7 +280,7 @@ ${chatContent}`;
       }
     >
       {currentConversation ? (
-    <List.Item
+        <List.Item
           title={currentConversation.title}
           subtitle={
             currentConversation.messages.length > 0
@@ -276,19 +288,11 @@ ${chatContent}`;
               : "Start typing to begin conversation"
           }
           icon={Icon.Message}
-          detail={
-            <List.Item.Detail
-              markdown={buildChatMarkdown()}
-            />
-          }
+          detail={<List.Item.Detail markdown={buildChatMarkdown()} />}
           actions={
             <ActionPanel>
               {searchText.trim() && (
-                <Action
-                  title="Send Message"
-                  icon={Icon.Airplane}
-                  onAction={() => handleSendMessage(searchText)}
-                />
+                <Action title="Send Message" icon={Icon.Airplane} onAction={() => handleSendMessage(searchText)} />
               )}
               <ActionPanel.Section>
                 <Action
