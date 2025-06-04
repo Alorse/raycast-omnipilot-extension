@@ -13,6 +13,7 @@ import {
 } from "@raycast/api";
 import { useLLMConfigs } from "./hooks/useLLMConfigs";
 import { LLMConfig, LLMConfigFormData } from "./types/llmConfig";
+import { getProviderName } from "./utils/providers";
 
 export default function ManageLLMs() {
   const { configs, activeConfig, isLoading, addConfig, updateConfig, deleteConfig, setActiveLLM, duplicateConfig } =
@@ -95,7 +96,7 @@ export default function ManageLLMs() {
             accessories={[
               ...(activeConfig?.id === config.id ? [{ text: "Active", icon: Icon.CheckCircle }] : []),
               ...(config.isDefault ? [{ text: "Default", icon: Icon.Star }] : []),
-              { text: new URL(config.apiUrl).hostname },
+              { text: getProviderName(config.apiUrl) },
             ]}
             actions={
               <ActionPanel>

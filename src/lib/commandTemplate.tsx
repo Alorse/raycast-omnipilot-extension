@@ -3,6 +3,7 @@ import { Detail } from "@raycast/api";
 import { useAIStreaming } from "../hooks/useAIStreaming";
 import { useCommandHistory } from "../hooks/useCommandHistory";
 import { LLMConfigManager } from "../services/llmConfigManager";
+import { getProviderName } from "../utils/providers";
 
 interface CommandTemplateProps {
   userQuery: string;
@@ -31,7 +32,7 @@ export function CommandTemplate({ userQuery, customPrompt, customModel }: Comman
         if (activeConfig) {
           setCurrentConfig({
             model: activeConfig.model,
-            provider: new URL(activeConfig.apiUrl).hostname,
+            provider: getProviderName(activeConfig.apiUrl),
             configName: activeConfig.name,
           });
         } else {

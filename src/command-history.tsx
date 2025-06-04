@@ -1,6 +1,7 @@
 import { Action, ActionPanel, List, Icon, confirmAlert, Alert } from "@raycast/api";
 import { useCommandHistory } from "./hooks/useCommandHistory";
 import { CommandHistoryEntry } from "./types";
+import { getProviderColor, getProviderName } from "./utils/providers";
 
 export default function CommandHistory() {
   const { history, isLoading, clearHistory, removeEntry } = useCommandHistory();
@@ -59,22 +60,6 @@ export default function CommandHistory() {
 
   const truncateText = (text: string, maxLength: number = 100) => {
     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-  };
-
-  const getProviderColor = (provider?: string) => {
-    if (provider?.includes("openai")) return "#10A37F";
-    if (provider?.includes("anthropic")) return "#D97706";
-    if (provider?.includes("gemini") || provider?.includes("google")) return "#4285F4";
-    if (provider?.includes("openrouter")) return "#8B5CF6";
-    return "#6B7280";
-  };
-
-  const getProviderName = (provider?: string) => {
-    if (provider?.includes("openai")) return "OpenAI";
-    if (provider?.includes("anthropic")) return "Anthropic";
-    if (provider?.includes("gemini") || provider?.includes("google")) return "Google";
-    if (provider?.includes("openrouter")) return "OpenRouter";
-    return provider || "Unknown";
   };
 
   return (

@@ -1,5 +1,6 @@
 import { LLMConfigManager } from "../services/llmConfigManager";
 import { LLMConfig } from "../types/llmConfig";
+import { getProviderName } from "./providers";
 
 /**
  * Get a summary of the current LLM configuration status
@@ -69,5 +70,5 @@ export async function getLLMStatusDescription(): Promise<string> {
     return `Active configuration "${status.activeConfig.name}" is missing an API key. Use 'Manage LLMs' to update it.`;
   }
 
-  return `Using "${status.activeConfig.name}" with model "${status.activeConfig.model}" via ${new URL(status.activeConfig.apiUrl).hostname}`;
+  return `Using "${status.activeConfig.name}" with model "${status.activeConfig.model}" via ${getProviderName(status.activeConfig.apiUrl)}`;
 }
