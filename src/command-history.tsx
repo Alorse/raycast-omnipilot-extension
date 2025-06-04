@@ -1,7 +1,7 @@
 import { Action, ActionPanel, List, Icon, confirmAlert, Alert } from "@raycast/api";
 import { useCommandHistory } from "./hooks/useCommandHistory";
 import { CommandHistoryEntry } from "./types";
-import { getProviderColor, getProviderName, getProviderIcon } from "./utils/providers";
+import { getProviderColor, getProviderIcon } from "./utils/providers";
 
 export default function CommandHistory() {
   const { history, isLoading, clearHistory, removeEntry } = useCommandHistory();
@@ -110,13 +110,15 @@ ${entry.response}`}
                       icon={Icon.Calendar}
                     />
                     <List.Item.Detail.Metadata.Separator />
-                    <List.Item.Detail.Metadata.TagList title="Provider">
-                      <List.Item.Detail.Metadata.TagList.Item
-                        text={getProviderName(entry.provider)}
-                        color={getProviderColor(entry.provider)}
-                        icon={{ source: getProviderIcon(entry.provider) }}
-                      />
-                    </List.Item.Detail.Metadata.TagList>
+                    {entry.configName && (
+                      <List.Item.Detail.Metadata.TagList title="Provider">
+                        <List.Item.Detail.Metadata.TagList.Item
+                          text={entry.configName}
+                          color={getProviderColor(entry.provider)}
+                          icon={{ source: getProviderIcon(entry.provider) }}
+                        />
+                      </List.Item.Detail.Metadata.TagList>
+                    )}
                     <List.Item.Detail.Metadata.TagList title="Model">
                       <List.Item.Detail.Metadata.TagList.Item
                         text={entry.model || "Unknown"}
@@ -124,14 +126,27 @@ ${entry.response}`}
                         icon={Icon.ComputerChip}
                       />
                     </List.Item.Detail.Metadata.TagList>
-                    {entry.configName && (
-                      <List.Item.Detail.Metadata.TagList title="Configuration">
-                        <List.Item.Detail.Metadata.TagList.Item
-                          text={entry.configName}
-                          color="#34D399"
-                          icon={Icon.Gear}
-                        />
-                      </List.Item.Detail.Metadata.TagList>
+                    {entry.usage && (
+                      <>
+                        <List.Item.Detail.Metadata.Separator />
+                        <List.Item.Detail.Metadata.TagList title="Token Usage">
+                          <List.Item.Detail.Metadata.TagList.Item
+                            text={`${entry.usage.prompt_tokens} prompt`}
+                            color="#4ECDC4"
+                            icon={Icon.Message}
+                          />
+                          <List.Item.Detail.Metadata.TagList.Item
+                            text={`${entry.usage.completion_tokens} completion`}
+                            color="#45B7D1"
+                            icon={Icon.Pencil}
+                          />
+                          <List.Item.Detail.Metadata.TagList.Item
+                            text={`${entry.usage.total_tokens} total`}
+                            color="#FF6B6B"
+                            icon={Icon.BarChart}
+                          />
+                        </List.Item.Detail.Metadata.TagList>
+                      </>
                     )}
                   </List.Item.Detail.Metadata>
                 }

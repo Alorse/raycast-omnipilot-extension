@@ -2,11 +2,13 @@ import { useState, useCallback } from "react";
 import { showToast, Toast } from "@raycast/api";
 import { createAIServiceFromConfig, getActiveModel } from "../services/openrouter";
 import { formatErrorMessage } from "../utils/errorFormatter";
+import { TokenUsage } from "../types";
 
 interface UseAIStreamingResult {
   response: string;
   isLoading: boolean;
   error: string | null;
+  tokenUsage: TokenUsage | null;
   askAI: (query: string, customPrompt?: string, customModel?: string) => Promise<void>;
   clearResponse: () => void;
 }
@@ -18,6 +20,7 @@ export function useAIStreaming(): UseAIStreamingResult {
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
 
   const askAI = useCallback(async (query: string, customPrompt?: string, customModel?: string) => {
     if (!query.trim()) {
@@ -29,6 +32,7 @@ export function useAIStreaming(): UseAIStreamingResult {
     setIsLoading(true);
     setError(null);
     setResponse(""); // Clear previous response
+    setTokenUsage(null); // Clear previous token usage
 
     await showToast({
       style: Toast.Style.Animated,
@@ -43,6 +47,11 @@ export function useAIStreaming(): UseAIStreamingResult {
       await aiService.askAI(query, customPrompt || "You are a helpful AI assistant.", modelToUse, {
         onChunk: (content: string) => {
           setResponse((prev) => prev + content);
+        },
+        onComplete: (fullResponse: string, usage?: TokenUsage) => {
+          if (usage) {
+            setTokenUsage(usage);
+          }
         },
         onError: (apiError: Error) => {
           console.error("Error calling AI API:", apiError);
@@ -76,12 +85,14 @@ export function useAIStreaming(): UseAIStreamingResult {
   const clearResponse = useCallback(() => {
     setResponse("");
     setError(null);
+    setTokenUsage(null);
   }, []);
 
   return {
     response,
     isLoading,
     error,
+    tokenUsage,
     askAI,
     clearResponse,
   };

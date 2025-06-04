@@ -1,15 +1,15 @@
-import { OpenRouterStreamChunk } from "../types";
+import { OpenRouterStreamChunk, TokenUsage } from "../types";
 
 /**
  * Processes a streaming response from OpenRouter API
  * @param response - The fetch response object
  * @param onChunk - Callback called for each content chunk received
- * @returns Promise that resolves with the complete response text
+ * @returns Promise that resolves with an object containing the complete response text and token usage
  */
 export async function processStreamingResponse(
   response: Response,
   onChunk: (content: string) => void,
-): Promise<string> {
+): Promise<{ fullResponse: string; usage?: TokenUsage }> {
   const reader = response.body?.getReader();
   if (!reader) {
     throw new Error("Response body is not readable");
@@ -18,6 +18,7 @@ export async function processStreamingResponse(
   const decoder = new TextDecoder();
   let buffer = "";
   let fullResponse = "";
+  let usage: TokenUsage | undefined;
 
   try {
     while (true) {
@@ -46,6 +47,11 @@ export async function processStreamingResponse(
               fullResponse += content;
               onChunk(content);
             }
+            
+            // Check for usage information in the chunk
+            if (parsed.usage) {
+              usage = parsed.usage;
+            }
           } catch {
             // Ignore invalid JSON
           }
@@ -56,5 +62,5 @@ export async function processStreamingResponse(
     reader.cancel();
   }
 
-  return fullResponse;
+  return { fullResponse, usage };
 }

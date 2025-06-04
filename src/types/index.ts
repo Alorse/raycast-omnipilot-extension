@@ -19,11 +19,18 @@ export interface OpenRouterStreamChunk {
       content?: string;
     };
   }>;
+  usage?: TokenUsage;
+}
+
+export interface TokenUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
 }
 
 export interface StreamingOptions {
   onChunk?: (content: string) => void;
-  onComplete?: (fullResponse: string) => void;
+  onComplete?: (fullResponse: string, usage?: TokenUsage) => void;
   onError?: (error: Error) => void;
 }
 
@@ -35,6 +42,7 @@ export interface CommandHistoryEntry {
   model: string;
   provider?: string;
   configName?: string;
+  usage?: TokenUsage;
 }
 
 export interface UseCommandHistoryResult {
@@ -46,6 +54,7 @@ export interface UseCommandHistoryResult {
     model: string,
     provider?: string,
     configName?: string,
+    usage?: TokenUsage,
   ) => Promise<void>;
   clearHistory: () => Promise<void>;
   loadHistory: () => Promise<void>;

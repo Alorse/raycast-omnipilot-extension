@@ -28,7 +28,8 @@ export class AIService {
     options: StreamingOptions = {},
   ): Promise<string> {
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      // First, do the streaming request
+      const streamResponse = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -41,11 +42,11 @@ export class AIService {
         }),
       });
 
-      if (!response.ok) {
+      if (!streamResponse.ok) {
         // Try to extract error message from response body
-        let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorMessage = `HTTP error! status: ${streamResponse.status}`;
         try {
-          const errorBody = await response.text();
+          const errorBody = await streamResponse.text();
           const errorData = JSON.parse(errorBody);
 
           // Try to extract a more specific error message
@@ -55,23 +56,25 @@ export class AIService {
           }
 
           // Add status code context if we have a good message
-          if (specificMessage && response.status !== 200) {
-            errorMessage = `[${response.status}] ${specificMessage}`;
+          if (specificMessage && streamResponse.status !== 200) {
+            errorMessage = `[${streamResponse.status}] ${specificMessage}`;
           }
         } catch (parseError) {
           // If we can't parse the error body, keep the default message
           console.warn("Could not parse error response:", parseError);
         }
 
-        console.error("Failed to fetch chat completion:", response.status, errorMessage);
+        console.error("Failed to fetch chat completion:", streamResponse.status, errorMessage);
         throw new Error(errorMessage);
       }
 
-      const fullResponse = await processStreamingResponse(response, (content) => {
+      const { fullResponse, usage } = await processStreamingResponse(streamResponse, (content) => {
         options.onChunk?.(content);
       });
 
-      options.onComplete?.(fullResponse);
+      // Call onComplete with the full response and usage information
+      options.onComplete?.(fullResponse, usage);
+
       return fullResponse;
     } catch (error) {
       const errorObj = error instanceof Error ? error : new Error(String(error));

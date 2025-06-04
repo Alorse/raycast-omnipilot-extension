@@ -16,7 +16,7 @@ interface CommandTemplateProps {
  */
 export function CommandTemplate({ userQuery, customPrompt, customModel }: CommandTemplateProps) {
   const hasExecutedRef = useRef(false);
-  const { response, isLoading, askAI } = useAIStreaming();
+  const { response, isLoading, tokenUsage, askAI } = useAIStreaming();
   const { addToHistory } = useCommandHistory();
   const [currentConfig, setCurrentConfig] = useState<{ model: string; provider: string; configName?: string } | null>(
     null,
@@ -67,9 +67,9 @@ export function CommandTemplate({ userQuery, customPrompt, customModel }: Comman
   // Save to history when response is complete
   useEffect(() => {
     if (response && !isLoading && query && currentConfig) {
-      addToHistory(query, response, currentConfig.model, currentConfig.provider, currentConfig.configName);
+      addToHistory(query, response, currentConfig.model, currentConfig.provider, currentConfig.configName, tokenUsage || undefined);
     }
-  }, [response, isLoading, query, currentConfig, addToHistory]);
+  }, [response, isLoading, query, currentConfig, tokenUsage, addToHistory]);
 
   return (
     <Detail

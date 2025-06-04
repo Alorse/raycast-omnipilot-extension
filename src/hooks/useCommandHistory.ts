@@ -1,6 +1,6 @@
 import { LocalStorage, showToast, Toast } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
-import { CommandHistoryEntry, UseCommandHistoryResult } from "../types";
+import { CommandHistoryEntry, UseCommandHistoryResult, TokenUsage } from "../types";
 
 const STORAGE_KEY = "omnipilot_command_history";
 const MAX_HISTORY_ENTRIES = 100;
@@ -77,9 +77,10 @@ export function useCommandHistory(): UseCommandHistoryResult {
    * @param model - The model used for this query
    * @param provider - The AI provider used (optional)
    * @param configName - The configuration name used (optional)
+   * @param usage - Token usage information (optional)
    */
   const addToHistory = useCallback(
-    async (prompt: string, response: string, model: string, provider?: string, configName?: string): Promise<void> => {
+    async (prompt: string, response: string, model: string, provider?: string, configName?: string, usage?: TokenUsage): Promise<void> => {
       if (!prompt.trim() || !response.trim()) {
         console.warn("Skipping history entry: prompt or response is empty");
         return;
@@ -94,6 +95,7 @@ export function useCommandHistory(): UseCommandHistoryResult {
           model,
           provider,
           configName,
+          usage,
         };
 
         setHistory((currentHistory) => {
