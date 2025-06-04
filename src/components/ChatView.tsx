@@ -279,69 +279,90 @@ ${message.content}
         </List.Dropdown>
       }
     >
-      {currentConversation ? (
-        <List.Item
-          title={currentConversation.title}
-          subtitle={
-            currentConversation.messages.length > 0
-              ? `${currentConversation.messages.length} messages`
-              : "Start typing to begin conversation"
-          }
-          icon={Icon.Message}
-          detail={<List.Item.Detail markdown={buildChatMarkdown()} />}
-          actions={
-            <ActionPanel>
-              {searchText.trim() && (
-                <Action title="Send Message" icon={Icon.Airplane} onAction={() => handleSendMessage(searchText)} />
-              )}
-              <ActionPanel.Section>
-                <Action
-                  title="New Chat"
-                  icon={Icon.Plus}
-                  onAction={async () => {
-                    await createConversation();
-                    showToast({
-                      style: Toast.Style.Success,
-                      title: "New chat created",
-                    });
-                  }}
-                  shortcut={{ modifiers: ["cmd"], key: "n" }}
-                />
-              </ActionPanel.Section>
-              {currentConversation.messages.length > 0 && (
-                <ActionPanel.Section>
-                  <Action.CopyToClipboard
-                    title="Copy Last Response"
-                    content={
-                      currentConversation.messages.length > 0
-                        ? currentConversation.messages[currentConversation.messages.length - 1]?.content || ""
-                        : ""
-                    }
-                    icon={Icon.Clipboard}
-                  />
-                  <Action.CopyToClipboard
-                    title="Copy Entire Conversation"
-                    content={currentConversation.messages
-                      .map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`)
-                      .join("\n\n")}
-                    icon={Icon.CopyClipboard}
-                  />
-                </ActionPanel.Section>
-              )}
-              {conversations.length > 1 && (
+      {conversations.length > 0 ? (
+        conversations.map((conversation) => (
+          <List.Item
+            key={conversation.id}
+            title={conversation.title}
+            subtitle={
+              conversation.messages.length > 0
+                ? `${conversation.messages.length} messages`
+                : "No messages yet"
+            }
+            icon={Icon.Message}
+            accessories={[
+              conversation.messages.length > 0
+                ? { text: formatMessageTime(conversation.messages[conversation.messages.length - 1]?.timestamp || new Date().toISOString()) }
+                : {},
+              conversation.id === currentConversation?.id ? { tag: { value: "Active", color: Color.Green } } : {},
+            ]}
+            detail={
+              <List.Item.Detail
+                markdown={conversation.id === currentConversation?.id ? buildChatMarkdown() : `# 💬 ${conversation.title}\n\n*Select this conversation to view messages.*`}
+              />
+            }
+            actions={
+              <ActionPanel>
+                {conversation.id === currentConversation?.id && searchText.trim() && (
+                  <Action title="Send Message" icon={Icon.Airplane} onAction={() => handleSendMessage(searchText)} />
+                )}
                 <ActionPanel.Section>
                   <Action
-                    title="Delete This Chat"
-                    icon={Icon.Trash}
-                    style={Action.Style.Destructive}
-                    onAction={() => handleDeleteConversation(currentConversation.id)}
-                    shortcut={{ modifiers: ["cmd"], key: "d" }}
+                    title="Switch to This Chat"
+                    icon={Icon.ArrowRight}
+                    onAction={() => {
+                      setCurrentConversation(conversation);
+                      setSelectedConversationId(conversation.id);
+                    }}
+                  />
+                  <Action
+                    title="New Chat"
+                    icon={Icon.Plus}
+                    onAction={async () => {
+                      await createConversation();
+                      showToast({
+                        style: Toast.Style.Success,
+                        title: "New chat created",
+                      });
+                    }}
+                    shortcut={{ modifiers: ["cmd"], key: "n" }}
                   />
                 </ActionPanel.Section>
-              )}
-            </ActionPanel>
-          }
-        />
+                {conversation.messages.length > 0 && (
+                  <ActionPanel.Section>
+                    <Action.CopyToClipboard
+                      title="Copy Last Response"
+                      content={
+                        conversation.messages.length > 0
+                          ? conversation.messages[conversation.messages.length - 1]?.content || ""
+                          : ""
+                      }
+                      icon={Icon.Clipboard}
+                    />
+                    <Action.CopyToClipboard
+                      title="Copy Entire Conversation"
+                      content={conversation.messages
+                        .map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`)
+                        .join("\n\n")}
+                      icon={Icon.CopyClipboard}
+                    />
+                  </ActionPanel.Section>
+                )}
+                {conversations.length > 1 && (
+                  <ActionPanel.Section>
+                    <Action
+                      title="Delete This Chat"
+                      icon={Icon.Trash}
+                      style={Action.Style.Destructive}
+                      onAction={() => handleDeleteConversation(conversation.id)}
+                      shortcut={{ modifiers: ["cmd"], key: "d" }}
+                    />
+                  </ActionPanel.Section>
+                )}
+              </ActionPanel>
+            }
+          />
+        ))
       ) : (
         <List.EmptyView
           icon={Icon.Message}
