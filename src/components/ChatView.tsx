@@ -186,23 +186,11 @@ export function ChatView() {
     }
   }, [currentConversation, conversations, deleteConversation, setCurrentConversation, createConversation]);
 
-  const getMessageIcon = (role: string) => {
-    return role === "user" ? Icon.Person : Icon.ComputerChip;
-  };
-
-  const getMessageColor = (role: string) => {
-    return role === "user" ? Color.Blue : Color.Green;
-  };
-
   const formatMessageTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
-  };
-
-  const truncateContent = (content: string, maxLength: number = 100) => {
-    return content.length > maxLength ? content.substring(0, maxLength) + "..." : content;
   };
 
   if (!isInitialized) {
@@ -222,12 +210,46 @@ export function ChatView() {
     });
   }
 
+  // Build chat content as markdown for better readability
+  const buildChatMarkdown = () => {
+    if (!currentConversation || allMessages.length === 0) {
+      return `# 💬 Chat with ${currentConfig?.model || 'AI'}
+
+*No messages yet. Type your message above and press Enter to start the conversation.*`;
+    }
+
+    const chatContent = allMessages.map((message) => {
+      const role = message.role === "user" ? "👤 **You**" : "🤖 **Assistant**";
+      const time = formatMessageTime(message.timestamp);
+      const tokens = message.tokenUsage ? ` *(${message.tokenUsage.total_tokens} tokens)*` : "";
+      
+      return `${role} ${tokens} - ${time}
+
+${message.content}
+
+---`;
+    }).join('\n\n');
+
+    const finalMarkdown = `# 💬 ${currentConversation.title}
+
+${chatContent}`;
+
+    return finalMarkdown;
+  };
+
   return (
     <List
       isLoading={isLoading}
       searchText={searchText}
       onSearchTextChange={setSearchText}
       searchBarPlaceholder="Type your message and press Enter to send..."
+      isShowingDetail={true}
+      onSelectionChange={(id) => {
+        // Handle Enter key press to send message
+        if (searchText.trim()) {
+          handleSendMessage(searchText);
+        }
+      }}
       searchBarAccessory={
         <List.Dropdown
           tooltip="Select Conversation"
@@ -244,177 +266,78 @@ export function ChatView() {
           ))}
         </List.Dropdown>
       }
-      actions={
-        <ActionPanel>
-          {searchText.trim() && (
-            <Action
-              title="Send Message"
-              icon={Icon.Airplane}
-              onAction={() => handleSendMessage(searchText)}
-            />
-          )}
-          <ActionPanel.Section>
-            <Action
-              title="New Chat"
-              icon={Icon.Plus}
-              onAction={async () => {
-                await createConversation();
-                showToast({
-                  style: Toast.Style.Success,
-                  title: "New chat created",
-                });
-              }}
-              shortcut={{ modifiers: ["cmd"], key: "n" }}
-            />
-          </ActionPanel.Section>
-          {currentConversation && (
-            <ActionPanel.Section>
-              <Action.CopyToClipboard
-                title="Copy Last Response"
-                content={
-                  currentConversation.messages.length > 0
-                    ? currentConversation.messages[currentConversation.messages.length - 1]?.content || ""
-                    : ""
-                }
-                icon={Icon.Clipboard}
-              />
-              <Action.CopyToClipboard
-                title="Copy Entire Conversation"
-                content={currentConversation.messages
-                  .map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`)
-                  .join("\n\n")}
-                icon={Icon.CopyClipboard}
-              />
-            </ActionPanel.Section>
-          )}
-        </ActionPanel>
-      }
     >
       {currentConversation ? (
-        <>
-          {allMessages.length === 0 ? (
-            <List.EmptyView
-              icon={Icon.Message}
-              title="Start a conversation"
-              description={`Type your message above and press Enter to chat with ${currentConfig?.model || 'AI'}`}
+    <List.Item
+          title={currentConversation.title}
+          subtitle={
+            currentConversation.messages.length > 0
+              ? `${currentConversation.messages.length} messages`
+              : "Start typing to begin conversation"
+          }
+          icon={Icon.Message}
+          detail={
+            <List.Item.Detail
+              markdown={buildChatMarkdown()}
             />
-          ) : (
-            allMessages.map((message) => (
-              <List.Item
-                key={message.id}
-                title={message.role === "user" ? "You" : "Assistant"}
-                subtitle={truncateContent(message.content)}
-                accessories={[
-                  { text: formatMessageTime(message.timestamp) },
-                  message.tokenUsage ? { 
-                    tag: { value: `${message.tokenUsage.total_tokens} tokens`, color: Color.SecondaryText } 
-                  } : {},
-                ]}
-                icon={{
-                  source: getMessageIcon(message.role),
-                  tintColor: getMessageColor(message.role),
-                }}
-                detail={
-                  <List.Item.Detail
-                    markdown={`## ${message.role === "user" ? "👤 You" : "🤖 Assistant"} 
-                    
-${message.content}
-
-${message.tokenUsage ? `---
-**Token Usage:** ${message.tokenUsage.total_tokens} total (${message.tokenUsage.prompt_tokens} prompt + ${message.tokenUsage.completion_tokens} completion)` : ""}
-                    `}
-                    metadata={
-                      message.tokenUsage ? (
-                        <List.Item.Detail.Metadata>
-                          <List.Item.Detail.Metadata.Label
-                            title="Role"
-                            text={message.role === "user" ? "You" : "Assistant"}
-                            icon={getMessageIcon(message.role)}
-                          />
-                          <List.Item.Detail.Metadata.Label
-                            title="Time"
-                            text={new Date(message.timestamp).toLocaleString()}
-                            icon={Icon.Clock}
-                          />
-                          <List.Item.Detail.Metadata.Separator />
-                          <List.Item.Detail.Metadata.Label
-                            title="Total Tokens"
-                            text={message.tokenUsage.total_tokens.toString()}
-                            icon={Icon.BarChart}
-                          />
-                          <List.Item.Detail.Metadata.Label
-                            title="Prompt Tokens"
-                            text={message.tokenUsage.prompt_tokens.toString()}
-                            icon={Icon.QuestionMarkCircle}
-                          />
-                          <List.Item.Detail.Metadata.Label
-                            title="Completion Tokens"
-                            text={message.tokenUsage.completion_tokens.toString()}
-                            icon={Icon.CheckCircle}
-                          />
-                        </List.Item.Detail.Metadata>
-                      ) : (
-                        <List.Item.Detail.Metadata>
-                          <List.Item.Detail.Metadata.Label
-                            title="Role"
-                            text={message.role === "user" ? "You" : "Assistant"}
-                            icon={getMessageIcon(message.role)}
-                          />
-                          <List.Item.Detail.Metadata.Label
-                            title="Time"
-                            text={new Date(message.timestamp).toLocaleString()}
-                            icon={Icon.Clock}
-                          />
-                        </List.Item.Detail.Metadata>
-                      )
+          }
+          actions={
+            <ActionPanel>
+              {searchText.trim() && (
+                <Action
+                  title="Send Message"
+                  icon={Icon.Airplane}
+                  onAction={() => handleSendMessage(searchText)}
+                />
+              )}
+              <ActionPanel.Section>
+                <Action
+                  title="New Chat"
+                  icon={Icon.Plus}
+                  onAction={async () => {
+                    await createConversation();
+                    showToast({
+                      style: Toast.Style.Success,
+                      title: "New chat created",
+                    });
+                  }}
+                  shortcut={{ modifiers: ["cmd"], key: "n" }}
+                />
+              </ActionPanel.Section>
+              {currentConversation.messages.length > 0 && (
+                <ActionPanel.Section>
+                  <Action.CopyToClipboard
+                    title="Copy Last Response"
+                    content={
+                      currentConversation.messages.length > 0
+                        ? currentConversation.messages[currentConversation.messages.length - 1]?.content || ""
+                        : ""
                     }
+                    icon={Icon.Clipboard}
                   />
-                }
-                actions={
-                  <ActionPanel>
-                    {searchText.trim() && (
-                      <Action
-                        title="Send Message"
-                        icon={Icon.Airplane}
-                        onAction={() => handleSendMessage(searchText)}
-                      />
-                    )}
-                    <ActionPanel.Section>
-                      <Action.CopyToClipboard
-                        title="Copy Message"
-                        content={message.content}
-                        icon={Icon.Clipboard}
-                      />
-                    </ActionPanel.Section>
-                    <ActionPanel.Section>
-                      <Action
-                        title="New Chat"
-                        icon={Icon.Plus}
-                        onAction={async () => {
-                          await createConversation();
-                          showToast({
-                            style: Toast.Style.Success,
-                            title: "New chat created",
-                          });
-                        }}
-                        shortcut={{ modifiers: ["cmd"], key: "n" }}
-                      />
-                      {conversations.length > 1 && (
-                        <Action
-                          title="Delete This Chat"
-                          icon={Icon.Trash}
-                          style={Action.Style.Destructive}
-                          onAction={() => handleDeleteConversation(currentConversation.id)}
-                          shortcut={{ modifiers: ["cmd"], key: "d" }}
-                        />
-                      )}
-                    </ActionPanel.Section>
-                  </ActionPanel>
-                }
-              />
-            ))
-          )}
-        </>
+                  <Action.CopyToClipboard
+                    title="Copy Entire Conversation"
+                    content={currentConversation.messages
+                      .map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`)
+                      .join("\n\n")}
+                    icon={Icon.CopyClipboard}
+                  />
+                </ActionPanel.Section>
+              )}
+              {conversations.length > 1 && (
+                <ActionPanel.Section>
+                  <Action
+                    title="Delete This Chat"
+                    icon={Icon.Trash}
+                    style={Action.Style.Destructive}
+                    onAction={() => handleDeleteConversation(currentConversation.id)}
+                    shortcut={{ modifiers: ["cmd"], key: "d" }}
+                  />
+                </ActionPanel.Section>
+              )}
+            </ActionPanel>
+          }
+        />
       ) : (
         <List.EmptyView
           icon={Icon.Message}
