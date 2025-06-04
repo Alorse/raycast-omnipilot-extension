@@ -12,16 +12,13 @@ OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs Ope
 
 ### 🤖 Ask AI
 - Stream AI responses in real-time  
-- Support for multiple AI providers
-- Customizable prompts and models
+- Customizable prompts
 - Copy responses to clipboard
-- View current model and provider information
 
 ### 🌐 Translation
 - Translate selected text or manual input
 - Smart language detection
 - Customizable target languages
-- Support for all major languages
 
 ### 📖 Explain
 - Explain complex concepts or code
@@ -33,8 +30,7 @@ OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs Ope
 - Search through past conversations
 - Copy previous prompts and responses
 - Remove individual entries or clear all
-- Track models and providers used
-- Persistent storage across sessions
+- Track providers, models and tokens used
 
 ### ⚙️ Multi-Provider Support
 - **OpenRouter**: Access to multiple AI models through a single API
