@@ -91,7 +91,7 @@ export default function ManageLLMs() {
         {configs.map((config) => (
           <List.Item
             key={config.id}
-            title={`${config.name} ${config.apiKey && config.apiKey.length > 0 ? "" : "⚠️"}`}
+            title={`${config.name} ${config.apiKey && config.apiKey.length > 0 ? "" : "⚠️"} ${activeConfig?.id === config.id ? "🟢" : ""}`}
             subtitle={config.model}
             icon={{ source: getProviderIcon(config.apiUrl) }}
 
@@ -101,9 +101,7 @@ export default function ManageLLMs() {
 
 **Provider:** ${getProviderName(config.apiUrl)}  
 **Model:** \`${config.model}\`  
-**API URL:** \`${config.apiUrl}\`  
-**Status:** ${activeConfig?.id === config.id ? "🟢 Active" : "⚪ Inactive"}  
-${config.isDefault ? "**Default Configuration** ⭐" : ""}`}
+**API URL:** \`${config.apiUrl}\``}
                 metadata={
                   <List.Item.Detail.Metadata>
                     <List.Item.Detail.Metadata.TagList title="Provider">
