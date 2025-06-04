@@ -100,6 +100,22 @@
       "title": "Manage Llms",
       "description": "Add, edit, and manage your AI language model configurations.",
       "mode": "view"
+    },
+    {
+      "name": "chat",
+      "title": "Chat",
+      "description": "Have conversational AI interactions with memory and context.",
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "systemPrompt",
+          "title": "System Prompt",
+          "description": "The system prompt that guides the AI's behavior in conversations.",
+          "type": "textfield",
+          "required": false,
+          "default": "You are a helpful AI assistant. Maintain context from the conversation history and provide thoughtful, relevant responses. Be concise but comprehensive in your answers."
+        }
+      ]
     }
   ],
   "dependencies": {

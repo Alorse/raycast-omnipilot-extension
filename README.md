@@ -27,8 +27,18 @@ OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs Ope
 
 ### 📚 Command History
 - Automatically save all AI interactions
-- Search through past conversations
+- Search through past conversations  
 - Copy previous prompts and responses
+- **Token Usage Tracking**: View detailed token consumption (prompt, completion, total tokens) for each command
+- Color-coded token display for easy monitoring
+
+### 💬 Chat
+- **Full Conversational AI**: Engage in multi-turn conversations with memory
+- **Conversation Management**: Create, save, and manage multiple chat conversations
+- **Persistent Memory**: AI remembers context throughout the entire conversation
+- **Token Tracking**: Monitor token usage across entire conversations
+- **Conversation History**: Browse and continue previous chat sessions
+- **Customizable System Prompts**: Set AI behavior and personality preferences
 - Remove individual entries or clear all
 - Track providers, models and tokens used
 
@@ -54,9 +64,11 @@ OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs Ope
 ## Commands
 
 - **Ask AI** (`ask`): Ask questions to AI with streaming responses
+- **Chat** (`chat`): Full conversational AI with memory and context
 - **Translate Text** (`translate`): Translate text between languages
+- **Explain** (`explain`): Get detailed explanations of complex concepts
 - **Command History** (`command-history`): View and manage your AI conversation history
-- **Explain** (`explain`) 
+- **Manage LLMs** (`manage-llms`): Configure and manage AI provider settings 
 
 ## Architecture
 
