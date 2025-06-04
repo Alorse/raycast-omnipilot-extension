@@ -1,7 +1,7 @@
 /**
  * LLM Provider information with branding and identification
  */
-export interface ProviderInfo {
+interface ProviderInfo {
   id: string;
   name: string;
   displayName: string;
@@ -14,7 +14,7 @@ export interface ProviderInfo {
 /**
  * Complete list of supported LLM providers with their branding information
  */
-export const PROVIDERS: ProviderInfo[] = [
+const PROVIDERS: ProviderInfo[] = [
   {
     id: "openai",
     name: "OpenAI",
@@ -133,7 +133,7 @@ export const PROVIDERS: ProviderInfo[] = [
 /**
  * Default provider info for unknown/unmatched providers
  */
-export const DEFAULT_PROVIDER: ProviderInfo = {
+const DEFAULT_PROVIDER: ProviderInfo = {
   id: "unknown",
   name: "Unknown",
   displayName: "Custom Provider",
@@ -147,7 +147,7 @@ export const DEFAULT_PROVIDER: ProviderInfo = {
  * @param input - API URL string or hostname
  * @returns ProviderInfo object with provider details
  */
-export function detectProvider(input: string): ProviderInfo {
+function detectProvider(input: string): ProviderInfo {
   if (!input) {
     return DEFAULT_PROVIDER;
   }
@@ -183,16 +183,6 @@ export function detectProvider(input: string): ProviderInfo {
 }
 
 /**
- * Get provider information by ID
- * @param providerId - Provider ID to lookup
- * @returns ProviderInfo object or default provider if not found
- */
-export function getProviderById(providerId: string): ProviderInfo {
-  const provider = PROVIDERS.find((p) => p.id === providerId);
-  return provider || DEFAULT_PROVIDER;
-}
-
-/**
  * Get provider color for UI elements
  * @param input - Provider ID, hostname, or URL
  * @returns Color hex string
@@ -221,14 +211,6 @@ export function getProviderName(input?: string): string {
 }
 
 /**
- * Get all available providers (useful for dropdowns, lists, etc.)
- * @returns Array of all supported providers
- */
-export function getAllProviders(): ProviderInfo[] {
-  return [...PROVIDERS];
-}
-
-/**
  * Get provider icon path for UI elements
  * @param input - Provider ID, hostname, or URL
  * @returns Icon path string
@@ -242,12 +224,3 @@ export function getProviderIcon(input?: string): string {
   return provider.icon || DEFAULT_PROVIDER.icon || "unknown.svg";
 }
 
-/**
- * Check if a provider is officially supported
- * @param input - Provider ID, hostname, or URL
- * @returns true if provider is officially supported
- */
-export function isOfficialProvider(input: string): boolean {
-  const provider = detectProvider(input);
-  return provider.id !== DEFAULT_PROVIDER.id;
-}
