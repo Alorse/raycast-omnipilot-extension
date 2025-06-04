@@ -10,7 +10,6 @@
     {
       "name": "ask",
       "title": "Ask AI",
-      "subtitle": "Ask AI",
       "description": "Get instant answers to any question using powerful language models.",
       "mode": "view",
       "arguments": [
@@ -91,14 +90,12 @@
     {
       "name": "command-history",
       "title": "Command History",
-      "subtitle": "View History",
       "description": "View and manage your AI command history.",
       "mode": "view"
     },
     {
       "name": "manage-llms",
       "title": "Manage Llms",
-      "subtitle": "LLM Config",
       "description": "Add, edit, and manage your AI language model configurations.",
       "mode": "view"
     }
