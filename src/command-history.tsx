@@ -1,7 +1,7 @@
 import { Action, ActionPanel, List, Icon, confirmAlert, Alert } from "@raycast/api";
 import { useCommandHistory } from "./hooks/useCommandHistory";
 import { CommandHistoryEntry } from "./types";
-import { getProviderColor, getProviderName } from "./utils/providers";
+import { getProviderColor, getProviderName, getProviderIcon } from "./utils/providers";
 
 export default function CommandHistory() {
   const { history, isLoading, clearHistory, removeEntry } = useCommandHistory();
@@ -114,7 +114,7 @@ ${entry.response}`}
                       <List.Item.Detail.Metadata.TagList.Item
                         text={getProviderName(entry.provider)}
                         color={getProviderColor(entry.provider)}
-                        icon={Icon.Globe}
+                        icon={{ source: getProviderIcon(entry.provider) }}
                       />
                     </List.Item.Detail.Metadata.TagList>
                     <List.Item.Detail.Metadata.TagList title="Model">

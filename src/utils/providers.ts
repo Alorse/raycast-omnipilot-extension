@@ -1,5 +1,3 @@
-import { Icon } from "@raycast/api";
-
 /**
  * LLM Provider information with branding and identification
  */
@@ -8,7 +6,7 @@ export interface ProviderInfo {
   name: string;
   displayName: string;
   color: string;
-  icon?: Icon; // Will be populated later with specific provider icons
+  icon?: string;
   hostnames: string[]; // Common hostnames/domains for detection
   isDefaultProvider?: boolean;
 }
@@ -22,6 +20,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "OpenAI",
     displayName: "OpenAI",
     color: "#10A37F",
+    icon: "openai.svg",
     hostnames: ["api.openai.com", "openai.com"],
     isDefaultProvider: true,
   },
@@ -30,6 +29,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "Anthropic",
     displayName: "Anthropic",
     color: "#D97706",
+    icon: "anthropic.svg",
     hostnames: ["api.anthropic.com", "anthropic.com"],
   },
   {
@@ -37,6 +37,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "Google",
     displayName: "Google Gemini",
     color: "#4285F4",
+    icon: "google.svg",
     hostnames: ["generativelanguage.googleapis.com", "google.com", "ai.google"],
   },
   {
@@ -44,6 +45,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "OpenRouter",
     displayName: "OpenRouter",
     color: "#8B5CF6",
+    icon: "openrouter.svg",
     hostnames: ["openrouter.ai"],
   },
   {
@@ -51,6 +53,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "Mistral AI",
     displayName: "Mistral AI",
     color: "#FF6B6B",
+    icon: "mistral.svg",
     hostnames: ["api.mistral.ai", "mistral.ai"],
   },
   {
@@ -58,6 +61,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "Cohere",
     displayName: "Cohere",
     color: "#39C5BB",
+    icon: "cohere.svg",
     hostnames: ["api.cohere.ai", "cohere.ai"],
   },
   {
@@ -65,6 +69,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "DeepSeek",
     displayName: "DeepSeek",
     color: "#1E293B",
+    icon: "deepseek.svg",
     hostnames: ["api.deepseek.com", "deepseek.com"],
   },
   {
@@ -72,6 +77,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "xAI",
     displayName: "xAI (Grok)",
     color: "#000000",
+    icon: "xai.svg",
     hostnames: ["api.x.ai", "x.ai"],
   },
   {
@@ -79,6 +85,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "Meta",
     displayName: "Meta Llama",
     color: "#1877F2",
+    icon: "meta.svg",
     hostnames: ["meta.ai", "llama.meta.com"],
   },
   {
@@ -86,6 +93,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "NVIDIA",
     displayName: "NVIDIA",
     color: "#76B900",
+    icon: "nvidia.svg",
     hostnames: ["api.nvidia.com", "nvidia.com"],
   },
   {
@@ -93,6 +101,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "Nous Research",
     displayName: "Nous Research",
     color: "#EF4444",
+    icon: "nous.svg",
     hostnames: ["inference-api.nousresearch.com", "nousresearch.com"],
   },
   {
@@ -100,6 +109,7 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "ASI:ONE",
     displayName: "ASI:ONE",
     color: "#10B981",
+    icon: "asi1.svg",
     hostnames: ["api.asi1.ai", "asi1.ai"],
   },
   {
@@ -107,7 +117,16 @@ export const PROVIDERS: ProviderInfo[] = [
     name: "AionLabs",
     displayName: "AionLabs",
     color: "#8B5A3C",
+    icon: "aionlabs.svg",
     hostnames: ["api.aionlabs.ai", "aionlabs.ai"],
+  },
+  {
+    id: "alibaba",
+    name: "Alibaba",
+    displayName: "Alibaba Qwen",
+    color: "#FF6A00",
+    icon: "qwen.svg",
+    hostnames: ["dashscope.aliyuncs.com", "qwen.alibaba.com", "alibaba.com"],
   },
 ];
 
@@ -119,6 +138,7 @@ export const DEFAULT_PROVIDER: ProviderInfo = {
   name: "Unknown",
   displayName: "Custom Provider",
   color: "#6B7280",
+  icon: "unknown.svg",
   hostnames: [],
 };
 
@@ -207,6 +227,20 @@ export function getProviderName(input?: string): string {
  */
 export function getAllProviders(): ProviderInfo[] {
   return [...PROVIDERS];
+}
+
+/**
+ * Get provider icon path for UI elements
+ * @param input - Provider ID, hostname, or URL
+ * @returns Icon path string
+ */
+export function getProviderIcon(input?: string): string {
+  if (!input) {
+    return DEFAULT_PROVIDER.icon || "unknown.svg";
+  }
+  
+  const provider = detectProvider(input);
+  return provider.icon || DEFAULT_PROVIDER.icon || "unknown.svg";
 }
 
 /**

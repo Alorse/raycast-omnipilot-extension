@@ -13,7 +13,7 @@ import {
 } from "@raycast/api";
 import { useLLMConfigs } from "./hooks/useLLMConfigs";
 import { LLMConfig, LLMConfigFormData } from "./types/llmConfig";
-import { getProviderName } from "./utils/providers";
+import { getProviderName, getProviderIcon, getProviderColor } from "./utils/providers";
 
 export default function ManageLLMs() {
   const { configs, activeConfig, isLoading, addConfig, updateConfig, deleteConfig, setActiveLLM, duplicateConfig } =
@@ -86,18 +86,82 @@ export default function ManageLLMs() {
   };
 
   return (
-    <List isLoading={isLoading} navigationTitle="Manage LLM Configurations">
-      <List.Section title="LLM Configurations">
+    <List isLoading={isLoading} navigationTitle="Manage LLM Configurations" isShowingDetail={true}>
+      <List.Section title={`LLM Configurations (${configs.length})`}>
         {configs.map((config) => (
           <List.Item
             key={config.id}
             title={config.name}
             subtitle={config.model}
-            accessories={[
-              ...(activeConfig?.id === config.id ? [{ text: "Active", icon: Icon.CheckCircle }] : []),
-              ...(config.isDefault ? [{ text: "Default", icon: Icon.Star }] : []),
-              { text: getProviderName(config.apiUrl) },
-            ]}
+            icon={{ source: getProviderIcon(config.apiUrl) }}
+
+            detail={
+              <List.Item.Detail
+                markdown={`# ${config.name}
+
+**Provider:** ${getProviderName(config.apiUrl)}  
+**Model:** \`${config.model}\`  
+**API URL:** \`${config.apiUrl}\`  
+**Status:** ${activeConfig?.id === config.id ? "🟢 Active" : "⚪ Inactive"}  
+${config.isDefault ? "**Default Configuration** ⭐" : ""}`}
+                metadata={
+                  <List.Item.Detail.Metadata>
+                    <List.Item.Detail.Metadata.TagList title="Provider">
+                      <List.Item.Detail.Metadata.TagList.Item
+                        text={getProviderName(config.apiUrl)}
+                        color={getProviderColor(config.apiUrl)}
+                        icon={{ source: getProviderIcon(config.apiUrl) }}
+                      />
+                    </List.Item.Detail.Metadata.TagList>
+                    {(activeConfig?.id === config.id || config.isDefault) && (
+                      <List.Item.Detail.Metadata.TagList title="Status">
+                        {activeConfig?.id === config.id && (
+                          <List.Item.Detail.Metadata.TagList.Item
+                            text="Active"
+                            color="#10B981"
+                            icon={Icon.CheckCircle}
+                          />
+                        )}
+                        {config.isDefault && (
+                          <List.Item.Detail.Metadata.TagList.Item
+                            text="Default"
+                            color="#F59E0B"
+                            icon={Icon.Star}
+                          />
+                        )}
+                      </List.Item.Detail.Metadata.TagList>
+                    )}
+                    <List.Item.Detail.Metadata.Separator />
+                    
+                    <List.Item.Detail.Metadata.Label
+                      title="Model"
+                      text={config.model}
+                      icon={Icon.ComputerChip}
+                    />
+                    
+                    <List.Item.Detail.Metadata.Label
+                      title="API Endpoint"
+                      text={config.apiUrl}
+                      icon={Icon.Globe}
+                    />
+                    
+                    <List.Item.Detail.Metadata.Label
+                      title="API Key Status"
+                      text={config.apiKey && config.apiKey.length > 0 ? "✅ Configured" : "❌ Missing"}
+                      icon={config.apiKey && config.apiKey.length > 0 ? Icon.Lock : Icon.ExclamationMark}
+                    />
+                    
+                    {config.createdAt && (
+                      <List.Item.Detail.Metadata.Label
+                        title="Created"
+                        text={new Date(config.createdAt).toLocaleDateString()}
+                        icon={Icon.Calendar}
+                      />
+                    )}
+                  </List.Item.Detail.Metadata>
+                }
+              />
+            }
             actions={
               <ActionPanel>
                 <ActionPanel.Section>
