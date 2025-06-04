@@ -1,6 +1,6 @@
 # OmniPilot - AI-Powered Raycast Extension
 
-OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs via OpenRouter, OpenAI and any OpenAI-compatible endpoint to help you ask questions, translate text, analyze content, and more — all directly from your desktop. Stay focused, work smarter, and bring AI everywhere you need it.
+OmniPilot is your all-in-one AI copilot for Raycast. It connects to top LLMs OpenRouter, Google, OpenAI and any OpenAI-compatible endpoint to help you ask questions, translate text, analyze content, and more — all directly from your desktop. Stay focused, work smarter, and bring AI everywhere you need it.
 
 ## Features
 
