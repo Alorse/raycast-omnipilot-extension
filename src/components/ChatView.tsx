@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   List,
   ActionPanel,
@@ -14,7 +14,6 @@ import {
 } from "@raycast/api";
 import { useChat } from "../hooks/useChat";
 import { useAIStreaming } from "../hooks/useAIStreaming";
-import { ChatConversation, ChatMessage } from "../types/chat";
 import { OpenRouterMessage } from "../types";
 import { LLMConfigManager } from "../services/llmConfigManager";
 import { getProviderName } from "../utils/providers";
@@ -63,16 +62,6 @@ export function ChatView() {
           });
         }
 
-        // Create initial conversation if none exists
-        if (conversations.length === 0) {
-          await createConversation();
-        } else if (!currentConversation) {
-          setCurrentConversation(conversations[0]);
-          setSelectedConversationId(conversations[0].id);
-        } else {
-          setSelectedConversationId(currentConversation.id);
-        }
-
         setIsInitialized(true);
       } catch (error) {
         console.error("Failed to initialize chat:", error);
@@ -85,7 +74,28 @@ export function ChatView() {
     };
 
     initializeChat();
-  }, [conversations, currentConversation, setCurrentConversation, createConversation]);
+  }, []); // Solo ejecutar una vez al montar el componente
+
+  // Separate effect to handle conversation selection after conversations are loaded
+  useEffect(() => {
+    if (isInitialized && conversations.length > 0 && !currentConversation) {
+      // Set the first conversation as current if none is selected
+      setCurrentConversation(conversations[0]);
+      setSelectedConversationId(conversations[0].id);
+    } else if (isInitialized && currentConversation) {
+      // Update selectedConversationId if currentConversation changes
+      setSelectedConversationId(currentConversation.id);
+    }
+  }, [isInitialized, conversations, currentConversation, setCurrentConversation]);
+
+  // Create initial conversation if none exists (only after initialization)
+  useEffect(() => {
+    if (isInitialized && conversations.length === 0) {
+      createConversation().catch((error) => {
+        console.error("Failed to create initial conversation:", error);
+      });
+    }
+  }, [isInitialized, conversations.length, createConversation]);
 
   // Handle new AI response
   useEffect(() => {
@@ -169,6 +179,8 @@ export function ChatView() {
       if (conversation) {
         setCurrentConversation(conversation);
         setSelectedConversationId(conversationId);
+      } else {
+        console.error("Conversation not found with ID:", conversationId);
       }
     },
     [conversations, setCurrentConversation],
@@ -260,29 +272,18 @@ ${message.content}
       onSearchTextChange={setSearchText}
       searchBarPlaceholder="Type your message and press Enter to send..."
       isShowingDetail={true}
+      selectedItemId={selectedConversationId}
       onSelectionChange={(id) => {
-        // Handle Enter key press to send message
-        if (searchText.trim()) {
-          handleSendMessage(searchText);
+        if (id && id !== selectedConversationId) {
+          handleConversationChange(id);
         }
       }}
-      searchBarAccessory={
-        <List.Dropdown tooltip="Select Conversation" value={selectedConversationId} onChange={handleConversationChange}>
-          {conversations.map((conversation) => (
-            <List.Dropdown.Item
-              key={conversation.id}
-              title={conversation.title}
-              value={conversation.id}
-              icon={Icon.Message}
-            />
-          ))}
-        </List.Dropdown>
-      }
     >
       {conversations.length > 0 ? (
         conversations.map((conversation) => (
           <List.Item
             key={conversation.id}
+            id={conversation.id}
             title={conversation.title}
             subtitle={
               conversation.messages.length > 0
@@ -298,7 +299,7 @@ ${message.content}
             ]}
             detail={
               <List.Item.Detail
-                markdown={conversation.id === currentConversation?.id ? buildChatMarkdown() : `# 💬 ${conversation.title}\n\n*Select this conversation to view messages.*`}
+                markdown={conversation.id === selectedConversationId ? buildChatMarkdown() : ""}
               />
             }
             actions={
@@ -306,28 +307,6 @@ ${message.content}
                 {conversation.id === currentConversation?.id && searchText.trim() && (
                   <Action title="Send Message" icon={Icon.Airplane} onAction={() => handleSendMessage(searchText)} />
                 )}
-                <ActionPanel.Section>
-                  <Action
-                    title="Switch to This Chat"
-                    icon={Icon.ArrowRight}
-                    onAction={() => {
-                      setCurrentConversation(conversation);
-                      setSelectedConversationId(conversation.id);
-                    }}
-                  />
-                  <Action
-                    title="New Chat"
-                    icon={Icon.Plus}
-                    onAction={async () => {
-                      await createConversation();
-                      showToast({
-                        style: Toast.Style.Success,
-                        title: "New chat created",
-                      });
-                    }}
-                    shortcut={{ modifiers: ["cmd"], key: "n" }}
-                  />
-                </ActionPanel.Section>
                 {conversation.messages.length > 0 && (
                   <ActionPanel.Section>
                     <Action.CopyToClipboard
