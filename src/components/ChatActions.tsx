@@ -1,10 +1,11 @@
 import { ActionPanel, Action, Icon } from "@raycast/api";
+import { ChatConversation, ChatMessage } from "../types/chat";
 
 interface ChatActionsProps {
   // Required props
   searchText?: string;
-  currentConversation: any;
-  conversations: any[];
+  currentConversation: ChatConversation | null;
+  conversations: ChatConversation[];
 
   // Action handlers
   handleSendMessage: (text: string) => Promise<void>;
@@ -89,7 +90,7 @@ export function ChatActions({
           <Action.CopyToClipboard
             title="Copy Entire Conversation"
             content={targetConversation.messages
-              .map((msg: any) => `${msg.role.toUpperCase()}: ${msg.content}`)
+              .map((msg: ChatMessage) => `${msg.role.toUpperCase()}: ${msg.content}`)
               .join("\n\n")}
             icon={Icon.CopyClipboard}
             shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}

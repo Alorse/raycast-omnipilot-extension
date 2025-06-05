@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigation, showToast, Toast, getPreferenceValues } from "@raycast/api";
+import { showToast, Toast, getPreferenceValues } from "@raycast/api";
 import { useChat } from "./useChat";
 import { useAIStreaming } from "./useAIStreaming";
 import { OpenRouterMessage } from "../types";
+import { ChatMessage } from "../types/chat";
 import { LLMConfigManager } from "../services/llmConfigManager";
 import { getProviderName } from "../utils/providers";
 
@@ -22,8 +23,8 @@ export interface ChatLogicState {
   } | null;
 
   // Computed
-  currentMessages: any[];
-  allMessages: any[];
+  currentMessages: ChatMessage[];
+  allMessages: ChatMessage[];
   chatMarkdown: string;
 
   // Actions
@@ -36,7 +37,6 @@ export interface ChatLogicState {
 }
 
 export function useChatLogic() {
-  const { push } = useNavigation();
   const preferences = getPreferenceValues<Preferences>();
   const {
     conversations,
