@@ -3,7 +3,7 @@ import { ActionPanel, Action, Icon } from "@raycast/api";
 
 interface ChatActionsProps {
   // Required props
-  searchText: string;
+  searchText?: string;
   currentConversation: any;
   conversations: any[];
   
@@ -15,10 +15,15 @@ interface ChatActionsProps {
   // Optional props for conditional rendering
   showSendMessage?: boolean;
   conversationId?: string;
+  
+  // For Detail components that need text input
+  showTextInput?: boolean;
+  showConversationSwitch?: boolean;
+  handleConversationChange?: (conversationId: string) => void;
 }
 
 export function ChatActions({
-  searchText,
+  searchText = "",
   currentConversation,
   conversations,
   handleSendMessage,
@@ -26,22 +31,84 @@ export function ChatActions({
   handleDeleteConversation,
   showSendMessage = true,
   conversationId,
+  showTextInput = false,
+  showConversationSwitch = false,
+  handleConversationChange,
 }: ChatActionsProps) {
   // Determine which conversation to work with
   const targetConversation = conversationId 
     ? conversations.find(conv => conv.id === conversationId) || currentConversation
     : currentConversation;
 
+  const handleSendMessageWithPrompt = async () => {
+    const { getSelectedText, showToast, Toast, Clipboard } = await import("@raycast/api");
+    
+    try {
+      // Try to get selected text first
+      let messageText = "";
+      try {
+        messageText = await getSelectedText();
+      } catch {
+        // If no selected text, try clipboard
+        try {
+          messageText = await Clipboard.readText() || "";
+        } catch {
+          messageText = "";
+        }
+      }
+      
+      if (!messageText.trim()) {
+        showToast({
+          style: Toast.Style.Failure,
+          title: "No message found",
+          message: "Please select text or copy a message to your clipboard first",
+        });
+        return;
+      }
+      
+      await handleSendMessage(messageText.trim());
+      
+      showToast({
+        style: Toast.Style.Success,
+        title: "Message sent",
+        message: "Your message has been sent to the AI",
+      });
+    } catch (error) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to send message",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
   return (
     <ActionPanel>
-      {/* Send Message Action - only show if there's text and showSendMessage is true */}
-      {showSendMessage && searchText.trim() && (
+      {/* Send Message Action - prioritize searchText input */}
+      {showSendMessage && searchText && searchText.trim() && (
         <Action
           title="Send Message"
           icon={Icon.Airplane}
           onAction={() => handleSendMessage(searchText)}
           shortcut={{ modifiers: ["cmd"], key: "enter" }}
         />
+      )}
+
+      {/* Conversation switching for Detail view */}
+      {showConversationSwitch && conversations.length > 1 && handleConversationChange && (
+        <ActionPanel.Section title="Switch Conversation">
+          {conversations
+            .filter(conv => conv.id !== currentConversation?.id)
+            .slice(0, 5) // Show only first 5 other conversations
+            .map((conv) => (
+              <Action
+                key={conv.id}
+                title={`Switch to: ${conv.title}`}
+                icon={Icon.ArrowRight}
+                onAction={() => handleConversationChange!(conv.id)}
+              />
+            ))}
+        </ActionPanel.Section>
       )}
 
       {/* New Chat Action */}

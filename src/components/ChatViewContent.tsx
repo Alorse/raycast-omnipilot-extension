@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Detail,
   List,
   Icon,
 } from "@raycast/api";
@@ -24,90 +25,46 @@ export function ChatViewContent() {
 
   if (!isInitialized) {
     return (
-      <List
+      <Detail
         isLoading={true}
-        searchBarPlaceholder="Initializing chat..."
-        searchBarAccessory={
-          <List.Dropdown tooltip="Select Conversation">
-            <List.Dropdown.Item title="Loading..." value="" />
-          </List.Dropdown>
-        }
+        markdown="# 🚀 Initializing chat...\n\nPlease wait while we set up your chat environment."
+        navigationTitle="Initializing..."
       />
     );
   }
 
   if (conversations.length === 0) {
     return (
-      <List
-        searchBarPlaceholder="Type your message and press Enter to send..."
-        searchBarAccessory={
-          <List.Dropdown tooltip="Select Conversation">
-            <List.Dropdown.Item title="No conversations" value="" />
-          </List.Dropdown>
-        }
+      <Detail
+        markdown="# 💬 Welcome to OmniPilot Chat\n\nNo conversations found. Create your first chat to get started!"
+        navigationTitle="No Conversations"
         actions={
           <ChatEmptyActions
             handleCreateConversation={handleCreateConversation}
           />
         }
-      >
-        <List.EmptyView
-          icon={Icon.Message}
-          title="No conversations found"
-          description="Create your first chat to get started!"
-        />
-      </List>
+      />
     );
   }
 
   return (
-    <List
+    <Detail
       isLoading={isLoading}
-      searchText={searchText}
-      onSearchTextChange={setSearchText}
-      searchBarPlaceholder="Type your message and press Enter to send..."
-      searchBarAccessory={
-        <List.Dropdown
-          tooltip="Select Conversation"
-          value={selectedConversationId}
-          onChange={handleConversationChange}
-        >
-          {conversations.map((conv) => (
-            <List.Dropdown.Item
-              key={conv.id}
-              title={conv.title}
-              value={conv.id}
-            />
-          ))}
-        </List.Dropdown>
+      markdown={chatMarkdown}
+      navigationTitle={currentConversation ? currentConversation.title : "No conversation selected"}
+      actions={
+        <ChatActions
+          currentConversation={currentConversation}
+          conversations={conversations}
+          handleSendMessage={handleSendMessage}
+          handleCreateConversation={handleCreateConversation}
+          handleDeleteConversation={handleDeleteConversation}
+          handleConversationChange={handleConversationChange}
+          showSendMessage={true}
+          showTextInput={true}
+          showConversationSwitch={true}
+        />
       }
-      isShowingDetail={true}
-    >
-      <List.Item
-        title={currentConversation ? currentConversation.title : "No conversation selected"}
-        subtitle={
-          currentConversation && currentConversation.messages.length > 0
-            ? `${currentConversation.messages.length} messages`
-            : "No messages yet"
-        }
-        icon={Icon.Message}
-        detail={
-          <List.Item.Detail
-            markdown={chatMarkdown}
-          />
-        }
-        actions={
-          <ChatActions
-            searchText={searchText}
-            currentConversation={currentConversation}
-            conversations={conversations}
-            handleSendMessage={handleSendMessage}
-            handleCreateConversation={handleCreateConversation}
-            handleDeleteConversation={handleDeleteConversation}
-            showSendMessage={true}
-          />
-        }
-      />
-    </List>
+    />
   );
 }
