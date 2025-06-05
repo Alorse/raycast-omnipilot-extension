@@ -20,12 +20,12 @@ export interface ChatLogicState {
     provider: string;
     configName?: string;
   } | null;
-  
+
   // Computed
   currentMessages: any[];
   allMessages: any[];
   chatMarkdown: string;
-  
+
   // Actions
   setSearchText: (text: string) => void;
   handleSendMessage: (messageText: string) => Promise<void>;
@@ -204,7 +204,7 @@ export function useChatLogic() {
   const handleDeleteConversation = useCallback(
     async (conversationId: string) => {
       const { confirmAlert, Alert } = await import("@raycast/api");
-      
+
       const confirmed = await confirmAlert({
         title: "Delete Conversation",
         message: "Are you sure you want to delete this conversation? This action cannot be undone.",
@@ -293,12 +293,12 @@ ${message.content}
     searchText,
     selectedConversationId,
     currentConfig,
-    
+
     // Computed
     currentMessages,
     allMessages,
     chatMarkdown: buildChatMarkdown(),
-    
+
     // Actions
     setSearchText,
     handleSendMessage,
@@ -306,7 +306,7 @@ ${message.content}
     handleDeleteConversation,
     handleCreateConversation,
     formatMessageTime,
-    
+
     // From hooks
     conversations,
     currentConversation,

@@ -1,7 +1,5 @@
-import {
-  List,
-  Icon,
-} from "@raycast/api";
+import React from "react";
+import { List, Icon, Action, ActionPanel } from "@raycast/api";
 import { useChatLogic } from "../hooks/useChatLogic";
 import { ChatActions, ChatEmptyActions } from "./ChatActions";
 
@@ -30,30 +28,49 @@ export function ChatViewWide() {
       isLoading={isLoading}
       searchText={searchText}
       onSearchTextChange={setSearchText}
-      searchBarPlaceholder="Type your message and press Enter to send..."
+      searchBarPlaceholder="Type your message here..."
+      searchBarAccessory={
+        <List.Dropdown
+          tooltip="Select Conversation"
+          value={selectedConversationId || ""}
+          onChange={(value) => value && handleConversationChange(value)}
+        >
+          <List.Dropdown.Section title="Conversations">
+            {conversations.map((conversation) => (
+              <List.Dropdown.Item
+                key={conversation.id}
+                title={conversation.title}
+                value={conversation.id}
+                icon={Icon.Message}
+              />
+            ))}
+          </List.Dropdown.Section>
+        </List.Dropdown>
+      }
       isShowingDetail={true}
-      selectedItemId={selectedConversationId}
-      onSelectionChange={(id) => {
-        if (id && id !== selectedConversationId) {
-          handleConversationChange(id);
-        }
-      }}
     >
-      {conversations.length > 0 ? (
-        conversations.map((conversation) => (
+      {conversations.length === 0 ? (
+        <List.EmptyView
+          icon={Icon.Message}
+          title="No conversations found"
+          description="Create your first chat to get started!"
+          actions={<ChatEmptyActions handleCreateConversation={handleCreateConversation} />}
+        />
+      ) : (
+        <>
+          {/* Single wide item that represents the full chat view */}
           <List.Item
-            key={conversation.id}
-            id={conversation.id}
-            title={conversation.title}
+            key={currentConversation?.id || "chat-view"}
+            id={currentConversation?.id || "chat-view"}
+            title={""}
             icon={Icon.Message}
-            accessories={[
-              conversation.messages.length > 0
-                ? { text: `${conversation.messages.length} messages` }
-                : { text: "No messages yet" },
-            ]}
             detail={
               <List.Item.Detail
-                markdown={conversation.id === selectedConversationId ? chatMarkdown : ""}
+                markdown={
+                  currentConversation
+                    ? chatMarkdown
+                    : "# 💬 Welcome to OmniPilot Chat\n\nSelect a conversation from the dropdown above to start chatting."
+                }
               />
             }
             actions={
@@ -64,23 +81,14 @@ export function ChatViewWide() {
                 handleSendMessage={handleSendMessage}
                 handleCreateConversation={handleCreateConversation}
                 handleDeleteConversation={handleDeleteConversation}
-                showSendMessage={conversation.id === currentConversation?.id}
-                conversationId={conversation.id}
+                handleConversationChange={handleConversationChange}
+                showSendMessage={true}
+                showTextInput={true}
+                showConversationSwitch={false} // Dropdown handles conversation switching
               />
             }
           />
-        ))
-      ) : (
-        <List.EmptyView
-          icon={Icon.Message}
-          title="No conversation selected"
-          description="Create a new chat to get started"
-          actions={
-            <ChatEmptyActions
-              handleCreateConversation={handleCreateConversation}
-            />
-          }
-        />
+        </>
       )}
     </List>
   );

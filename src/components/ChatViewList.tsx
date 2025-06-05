@@ -1,89 +1,44 @@
-import {
-  List,
-  Icon,
-  Color,
-} from "@raycast/api";
-import { useChatLogic } from "../hooks/useChatLogic";
-import { ChatActions, ChatEmptyActions } from "./ChatActions";
+import { List, ActionPanel, Action, Icon } from "@raycast/api";
 
 export function ChatViewList() {
-  const {
-    isInitialized,
-    searchText,
-    selectedConversationId,
-    chatMarkdown,
-    setSearchText,
-    handleSendMessage,
-    handleConversationChange,
-    handleDeleteConversation,
-    handleCreateConversation,
-    formatMessageTime,
-    conversations,
-    currentConversation,
-    isLoading,
-  } = useChatLogic();
-
-  if (!isInitialized) {
-    return <List isLoading={true} searchBarPlaceholder="Initializing chat..." />;
-  }
+  const items = [
+    {
+      id: "obsidian",
+      title: "Obsidian",
+      subtitle: "Control Obsidian with Raycast",
+      icon: "🟣", // también puede ser una URL o archivo local
+      downloads: "90.1k",
+      author: "👤",
+    },
+    {
+      id: "cursor",
+      title: "Cursor",
+      subtitle: "Control Cursor & Codium directly from Raycast",
+      icon: Icon.Terminal,
+      downloads: "18.2k",
+      author: "👨‍💻",
+    },
+  ];
 
   return (
-    <List
-      isLoading={isLoading}
-      searchText={searchText}
-      onSearchTextChange={setSearchText}
-      searchBarPlaceholder="Type your message and press Enter to send..."
-      isShowingDetail={true}
-      selectedItemId={selectedConversationId}
-      onSelectionChange={(id) => {
-        if (id && id !== selectedConversationId) {
-          handleConversationChange(id);
-        }
-      }}
-    >
-      {conversations.length > 0 ? (
-        conversations.map((conversation) => (
-          <List.Item
-            key={conversation.id}
-            id={conversation.id}
-            title={conversation.title}
-            icon={Icon.Message}
-            accessories={[
-              conversation.messages.length > 0
-                ? { text: `${conversation.messages.length} messages` }
-                : { text: "No messages yet" },
-            ]}
-            detail={
-              <List.Item.Detail
-                markdown={conversation.id === selectedConversationId ? chatMarkdown : ""}
-              />
-            }
-            actions={
-              <ChatActions
-                searchText={searchText}
-                currentConversation={currentConversation}
-                conversations={conversations}
-                handleSendMessage={handleSendMessage}
-                handleCreateConversation={handleCreateConversation}
-                handleDeleteConversation={handleDeleteConversation}
-                showSendMessage={conversation.id === currentConversation?.id}
-                conversationId={conversation.id}
-              />
-            }
-          />
-        ))
-      ) : (
-        <List.EmptyView
-          icon={Icon.Message}
-          title="No conversation selected"
-          description="Create a new chat to get started"
+    <List isShowingDetail={false}>
+      {items.map((item) => (
+        <List.Item
+          key={item.id}
+          title={item.title}
+          subtitle={item.subtitle}
+          icon={item.icon}
+          accessories={[
+            { text: item.downloads, icon: Icon.Download },
+            { text: item.author },
+          ]}
           actions={
-            <ChatEmptyActions
-              handleCreateConversation={handleCreateConversation}
-            />
+            <ActionPanel>
+              <Action.OpenInBrowser url={`https://raycast.com/extensions/${item.id}`} />
+            </ActionPanel>
           }
         />
-      )}
+      ))}
     </List>
   );
 }

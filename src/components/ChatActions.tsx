@@ -6,16 +6,16 @@ interface ChatActionsProps {
   searchText?: string;
   currentConversation: any;
   conversations: any[];
-  
+
   // Action handlers
   handleSendMessage: (text: string) => Promise<void>;
   handleCreateConversation: () => Promise<void>;
   handleDeleteConversation: (conversationId: string) => Promise<void>;
-  
+
   // Optional props for conditional rendering
   showSendMessage?: boolean;
   conversationId?: string;
-  
+
   // For Detail components that need text input
   showTextInput?: boolean;
   showConversationSwitch?: boolean;
@@ -36,13 +36,13 @@ export function ChatActions({
   handleConversationChange,
 }: ChatActionsProps) {
   // Determine which conversation to work with
-  const targetConversation = conversationId 
-    ? conversations.find(conv => conv.id === conversationId) || currentConversation
+  const targetConversation = conversationId
+    ? conversations.find((conv) => conv.id === conversationId) || currentConversation
     : currentConversation;
 
   const handleSendMessageWithPrompt = async () => {
     const { getSelectedText, showToast, Toast, Clipboard } = await import("@raycast/api");
-    
+
     try {
       // Try to get selected text first
       let messageText = "";
@@ -51,12 +51,12 @@ export function ChatActions({
       } catch {
         // If no selected text, try clipboard
         try {
-          messageText = await Clipboard.readText() || "";
+          messageText = (await Clipboard.readText()) || "";
         } catch {
           messageText = "";
         }
       }
-      
+
       if (!messageText.trim()) {
         showToast({
           style: Toast.Style.Failure,
@@ -65,9 +65,9 @@ export function ChatActions({
         });
         return;
       }
-      
+
       await handleSendMessage(messageText.trim());
-      
+
       showToast({
         style: Toast.Style.Success,
         title: "Message sent",
@@ -98,7 +98,7 @@ export function ChatActions({
       {showConversationSwitch && conversations.length > 1 && handleConversationChange && (
         <ActionPanel.Section title="Switch Conversation">
           {conversations
-            .filter(conv => conv.id !== currentConversation?.id)
+            .filter((conv) => conv.id !== currentConversation?.id)
             .slice(0, 5) // Show only first 5 other conversations
             .map((conv) => (
               <Action
@@ -160,11 +160,7 @@ export function ChatActions({
 }
 
 // Alternative version for EmptyView when no conversations exist
-export function ChatEmptyActions({
-  handleCreateConversation,
-}: {
-  handleCreateConversation: () => Promise<void>;
-}) {
+export function ChatEmptyActions({ handleCreateConversation }: { handleCreateConversation: () => Promise<void> }) {
   return (
     <ActionPanel>
       <Action

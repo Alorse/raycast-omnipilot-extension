@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  Detail,
-  List,
-  Icon,
-} from "@raycast/api";
+import { Detail, List, Icon } from "@raycast/api";
 import { useChatLogic } from "../hooks/useChatLogic";
 import { ChatActions, ChatEmptyActions } from "./ChatActions";
 
@@ -38,11 +34,7 @@ export function ChatViewContent() {
       <Detail
         markdown="# 💬 Welcome to OmniPilot Chat\n\nNo conversations found. Create your first chat to get started!"
         navigationTitle="No Conversations"
-        actions={
-          <ChatEmptyActions
-            handleCreateConversation={handleCreateConversation}
-          />
-        }
+        actions={<ChatEmptyActions handleCreateConversation={handleCreateConversation} />}
       />
     );
   }

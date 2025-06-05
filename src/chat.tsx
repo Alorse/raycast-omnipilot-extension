@@ -4,9 +4,9 @@ import { ChatViewWide } from "./components/ChatViewWide";
 
 // Change this to test different chat views:
 // "list" - Original sidebar view with conversations list
-// "wide" - Full-width view with searchbar and dropdown for conversation selection  
+// "wide" - Full-width view with searchbar and dropdown for conversation selection
 // "content" - Detail-based view (limited, no searchbar)
-const chatViewType: "list" | "wide" | "content" = "content"; // Change this to "list" or "wide" to test other views
+const chatViewType: "list" | "wide" | "content" = "list"; // Change this to "list" or "wide" to test other views
 
 export default function ChatCommand() {
   switch (chatViewType) {
