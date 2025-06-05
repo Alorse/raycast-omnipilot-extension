@@ -22,7 +22,7 @@ export default function CreateCalendarEvent() {
   const [isLoadingText, setIsLoadingText] = useState(true);
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(null);
   const [isProcessingEvent, setIsProcessingEvent] = useState(false);
-  
+
   const { response, isLoading, error, askAI } = useAIStreaming();
   const preferences = getPreferenceValues<Preferences>();
 
@@ -32,7 +32,7 @@ export default function CreateCalendarEvent() {
     const date_str = now.toISOString().split("T")[0];
     const time_str = now.toISOString().split("T")[1].split(".")[0];
     const week_day = now.getDay().toString();
-    
+
     return { date_str, time_str, week_day };
   }, []);
 
@@ -57,7 +57,7 @@ export default function CreateCalendarEvent() {
   const createSystemPrompt = useCallback(() => {
     const { date_str, time_str, week_day } = getCurrentDateTimeInfo();
     const language = preferences.defaultLanguage || "English";
-    
+
     return `Extract schedule information from the text provided by the user.
 The output should be in the following JSON format.
 
@@ -86,7 +86,7 @@ Note:
   useEffect(() => {
     if (response && !isLoading && !isProcessingEvent) {
       setIsProcessingEvent(true);
-      
+
       try {
         // Try to extract JSON from the response
         const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -94,7 +94,7 @@ Note:
           const jsonStr = jsonMatch[0];
           const parsedEvent = JSON.parse(jsonStr) as CalendarEvent;
           setCalendarEvent(parsedEvent);
-          
+
           // Create calendar URL and handle clipboard/browser
           createCalendarEvent(parsedEvent);
         } else {
@@ -117,7 +117,7 @@ Note:
   const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
     try {
       const url = generateGoogleCalendarURL(event);
-      
+
       await showHUD("Calendar event extracted! Copied to clipboard and opened in browser.");
       await Clipboard.copy(url);
       await open(url);
@@ -193,7 +193,8 @@ Please select text containing event information and try again.
 `;
 
   if (isLoading) {
-    markdownContent += "🤖 **Extracting event information...**\n\nPlease wait while I analyze the text and extract calendar event details.";
+    markdownContent +=
+      "🤖 **Extracting event information...**\n\nPlease wait while I analyze the text and extract calendar event details.";
   } else if (error) {
     markdownContent += `❌ **Error:**\n${error}`;
   } else if (calendarEvent) {
@@ -201,7 +202,7 @@ Please select text containing event information and try again.
 
 **Event Details:**
 - **Title:** ${calendarEvent.title}
-- **Date:** ${calendarEvent.start_date} (${calendarEvent.start_date === calendarEvent.end_date ? 'Same day' : `to ${calendarEvent.end_date}`})
+- **Date:** ${calendarEvent.start_date} (${calendarEvent.start_date === calendarEvent.end_date ? "Same day" : `to ${calendarEvent.end_date}`})
 - **Time:** ${calendarEvent.start_time} - ${calendarEvent.end_time}
 - **Location:** ${calendarEvent.location}
 - **Details:** ${calendarEvent.details}

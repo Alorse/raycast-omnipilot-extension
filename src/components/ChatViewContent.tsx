@@ -1,15 +1,11 @@
-import React from "react";
-import { Detail, List, Icon } from "@raycast/api";
+import { Detail } from "@raycast/api";
 import { useChatLogic } from "../hooks/useChatLogic";
 import { ChatActions, ChatEmptyActions } from "./ChatActions";
 
 export function ChatViewContent() {
   const {
     isInitialized,
-    searchText,
-    selectedConversationId,
     chatMarkdown,
-    setSearchText,
     handleSendMessage,
     handleConversationChange,
     handleDeleteConversation,
@@ -53,7 +49,6 @@ export function ChatViewContent() {
           handleDeleteConversation={handleDeleteConversation}
           handleConversationChange={handleConversationChange}
           showSendMessage={true}
-          showTextInput={true}
           showConversationSwitch={true}
         />
       }

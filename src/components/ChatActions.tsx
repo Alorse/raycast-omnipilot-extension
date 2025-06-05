@@ -1,4 +1,3 @@
-import React from "react";
 import { ActionPanel, Action, Icon } from "@raycast/api";
 
 interface ChatActionsProps {
@@ -16,8 +15,6 @@ interface ChatActionsProps {
   showSendMessage?: boolean;
   conversationId?: string;
 
-  // For Detail components that need text input
-  showTextInput?: boolean;
   showConversationSwitch?: boolean;
   handleConversationChange?: (conversationId: string) => void;
 }
@@ -31,7 +28,6 @@ export function ChatActions({
   handleDeleteConversation,
   showSendMessage = true,
   conversationId,
-  showTextInput = false,
   showConversationSwitch = false,
   handleConversationChange,
 }: ChatActionsProps) {

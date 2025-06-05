@@ -1,5 +1,4 @@
-import React from "react";
-import { List, Icon, Action, ActionPanel } from "@raycast/api";
+import { List, Icon } from "@raycast/api";
 import { useChatLogic } from "../hooks/useChatLogic";
 import { ChatActions, ChatEmptyActions } from "./ChatActions";
 
@@ -83,7 +82,6 @@ export function ChatViewWide() {
                 handleDeleteConversation={handleDeleteConversation}
                 handleConversationChange={handleConversationChange}
                 showSendMessage={true}
-                showTextInput={true}
                 showConversationSwitch={false} // Dropdown handles conversation switching
               />
             }
