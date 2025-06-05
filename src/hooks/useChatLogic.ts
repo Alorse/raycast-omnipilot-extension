@@ -1,19 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  List,
-  ActionPanel,
-  Action,
-  useNavigation,
-  showToast,
-  Toast,
-  Icon,
-  confirmAlert,
-  Alert,
-  getPreferenceValues,
-  Color,
-} from "@raycast/api";
-import { useChat } from "../hooks/useChat";
-import { useAIStreaming } from "../hooks/useAIStreaming";
+import { useNavigation, showToast, Toast, getPreferenceValues } from "@raycast/api";
+import { useChat } from "./useChat";
+import { useAIStreaming } from "./useAIStreaming";
 import { OpenRouterMessage } from "../types";
 import { LLMConfigManager } from "../services/llmConfigManager";
 import { getProviderName } from "../utils/providers";
@@ -22,7 +10,32 @@ interface Preferences {
   systemPrompt: string;
 }
 
-export function ChatView() {
+export interface ChatLogicState {
+  // State
+  isInitialized: boolean;
+  searchText: string;
+  selectedConversationId: string;
+  currentConfig: {
+    model: string;
+    provider: string;
+    configName?: string;
+  } | null;
+  
+  // Computed
+  currentMessages: any[];
+  allMessages: any[];
+  chatMarkdown: string;
+  
+  // Actions
+  setSearchText: (text: string) => void;
+  handleSendMessage: (messageText: string) => Promise<void>;
+  handleConversationChange: (conversationId: string) => void;
+  handleDeleteConversation: (conversationId: string) => Promise<void>;
+  handleCreateConversation: () => Promise<void>;
+  formatMessageTime: (timestamp: string) => string;
+}
+
+export function useChatLogic() {
   const { push } = useNavigation();
   const preferences = getPreferenceValues<Preferences>();
   const {
@@ -48,7 +61,7 @@ export function ChatView() {
   const responseStartRef = useRef<string>("");
   const processingResponseRef = useRef(false);
 
-  // Initialize chat and load config
+  // Single initialization effect
   useEffect(() => {
     const initializeChat = async () => {
       try {
@@ -74,30 +87,32 @@ export function ChatView() {
     };
 
     initializeChat();
-  }, []); // Solo ejecutar una vez al montar el componente
+  }, []);
 
-  // Separate effect to handle conversation selection after conversations are loaded
+  // Handle conversation management after initialization
   useEffect(() => {
-    if (isInitialized && conversations.length > 0 && !currentConversation) {
-      // Set the first conversation as current if none is selected
-      setCurrentConversation(conversations[0]);
-      setSelectedConversationId(conversations[0].id);
-    } else if (isInitialized && currentConversation) {
-      // Update selectedConversationId if currentConversation changes
-      setSelectedConversationId(currentConversation.id);
-    }
-  }, [isInitialized, conversations, currentConversation, setCurrentConversation]);
+    if (!isInitialized) return;
 
-  // Create initial conversation if none exists (only after initialization)
-  useEffect(() => {
-    if (isInitialized && conversations.length === 0) {
-      createConversation().catch((error) => {
-        console.error("Failed to create initial conversation:", error);
-      });
-    }
-  }, [isInitialized, conversations.length, createConversation]);
+    const manageConversations = async () => {
+      if (conversations.length === 0) {
+        // Create initial conversation if none exists
+        await createConversation();
+      } else if (!currentConversation) {
+        // Set the first conversation as current if none is selected
+        setCurrentConversation(conversations[0]);
+        setSelectedConversationId(conversations[0].id);
+      } else {
+        // Update selectedConversationId if currentConversation changes
+        setSelectedConversationId(currentConversation.id);
+      }
+    };
 
-  // Handle new AI response
+    manageConversations().catch((error) => {
+      console.error("Failed to manage conversations:", error);
+    });
+  }, [isInitialized, conversations.length, currentConversation, createConversation, setCurrentConversation]);
+
+  // Handle AI response processing
   useEffect(() => {
     if (response && !isLoading && !processingResponseRef.current && currentConversation) {
       // Only process if response has changed from what we started with
@@ -188,6 +203,8 @@ export function ChatView() {
 
   const handleDeleteConversation = useCallback(
     async (conversationId: string) => {
+      const { confirmAlert, Alert } = await import("@raycast/api");
+      
       const confirmed = await confirmAlert({
         title: "Delete Conversation",
         message: "Are you sure you want to delete this conversation? This action cannot be undone.",
@@ -216,17 +233,22 @@ export function ChatView() {
     [currentConversation, conversations, deleteConversation, setCurrentConversation, createConversation],
   );
 
-  const formatMessageTime = (timestamp: string) => {
+  const handleCreateConversation = useCallback(async () => {
+    await createConversation();
+    showToast({
+      style: Toast.Style.Success,
+      title: "New chat created",
+    });
+  }, [createConversation]);
+
+  const formatMessageTime = useCallback((timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
+  }, []);
 
-  if (!isInitialized) {
-    return <List isLoading={true} searchBarPlaceholder="Initializing chat..." />;
-  }
-
+  // Computed values
   const currentMessages = currentConversation?.messages || [];
   const allMessages = [...currentMessages];
 
@@ -241,7 +263,7 @@ export function ChatView() {
   }
 
   // Build chat content as markdown for better readability
-  const buildChatMarkdown = () => {
+  const buildChatMarkdown = useCallback(() => {
     if (!currentConversation || allMessages.length === 0) {
       return `# 💬 Chat with ${currentConfig?.model || "AI"}
 
@@ -263,107 +285,33 @@ ${message.content}
       .join("\n\n");
 
     return chatContent;
-  };
+  }, [allMessages, currentConversation, currentConfig, formatMessageTime]);
 
-  return (
-    <List
-      isLoading={isLoading}
-      searchText={searchText}
-      onSearchTextChange={setSearchText}
-      searchBarPlaceholder="Type your message and press Enter to send..."
-      isShowingDetail={true}
-      selectedItemId={selectedConversationId}
-      onSelectionChange={(id) => {
-        if (id && id !== selectedConversationId) {
-          handleConversationChange(id);
-        }
-      }}
-    >
-      {conversations.length > 0 ? (
-        conversations.map((conversation) => (
-          <List.Item
-            key={conversation.id}
-            id={conversation.id}
-            title={conversation.title}
-            subtitle={
-              conversation.messages.length > 0
-                ? `${conversation.messages.length} messages`
-                : "No messages yet"
-            }
-            icon={Icon.Message}
-            accessories={[
-              conversation.messages.length > 0
-                ? { text: formatMessageTime(conversation.messages[conversation.messages.length - 1]?.timestamp || new Date().toISOString()) }
-                : {},
-              conversation.id === currentConversation?.id ? { tag: { value: "Active", color: Color.Green } } : {},
-            ]}
-            detail={
-              <List.Item.Detail
-                markdown={conversation.id === selectedConversationId ? buildChatMarkdown() : ""}
-              />
-            }
-            actions={
-              <ActionPanel>
-                {conversation.id === currentConversation?.id && searchText.trim() && (
-                  <Action title="Send Message" icon={Icon.Airplane} onAction={() => handleSendMessage(searchText)} />
-                )}
-                {conversation.messages.length > 0 && (
-                  <ActionPanel.Section>
-                    <Action.CopyToClipboard
-                      title="Copy Last Response"
-                      content={
-                        conversation.messages.length > 0
-                          ? conversation.messages[conversation.messages.length - 1]?.content || ""
-                          : ""
-                      }
-                      icon={Icon.Clipboard}
-                    />
-                    <Action.CopyToClipboard
-                      title="Copy Entire Conversation"
-                      content={conversation.messages
-                        .map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`)
-                        .join("\n\n")}
-                      icon={Icon.CopyClipboard}
-                    />
-                  </ActionPanel.Section>
-                )}
-                {conversations.length > 1 && (
-                  <ActionPanel.Section>
-                    <Action
-                      title="Delete This Chat"
-                      icon={Icon.Trash}
-                      style={Action.Style.Destructive}
-                      onAction={() => handleDeleteConversation(conversation.id)}
-                      shortcut={{ modifiers: ["cmd"], key: "d" }}
-                    />
-                  </ActionPanel.Section>
-                )}
-              </ActionPanel>
-            }
-          />
-        ))
-      ) : (
-        <List.EmptyView
-          icon={Icon.Message}
-          title="No conversation selected"
-          description="Create a new chat to get started"
-          actions={
-            <ActionPanel>
-              <Action
-                title="New Chat"
-                icon={Icon.Plus}
-                onAction={async () => {
-                  await createConversation();
-                  showToast({
-                    style: Toast.Style.Success,
-                    title: "New chat created",
-                  });
-                }}
-              />
-            </ActionPanel>
-          }
-        />
-      )}
-    </List>
-  );
+  return {
+    // State
+    isInitialized,
+    searchText,
+    selectedConversationId,
+    currentConfig,
+    
+    // Computed
+    currentMessages,
+    allMessages,
+    chatMarkdown: buildChatMarkdown(),
+    
+    // Actions
+    setSearchText,
+    handleSendMessage,
+    handleConversationChange,
+    handleDeleteConversation,
+    handleCreateConversation,
+    formatMessageTime,
+    
+    // From hooks
+    conversations,
+    currentConversation,
+    response,
+    isLoading,
+    tokenUsage,
+  };
 }
