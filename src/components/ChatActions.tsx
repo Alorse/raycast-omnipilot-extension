@@ -36,48 +36,6 @@ export function ChatActions({
     ? conversations.find((conv) => conv.id === conversationId) || currentConversation
     : currentConversation;
 
-  const handleSendMessageWithPrompt = async () => {
-    const { getSelectedText, showToast, Toast, Clipboard } = await import("@raycast/api");
-
-    try {
-      // Try to get selected text first
-      let messageText = "";
-      try {
-        messageText = await getSelectedText();
-      } catch {
-        // If no selected text, try clipboard
-        try {
-          messageText = (await Clipboard.readText()) || "";
-        } catch {
-          messageText = "";
-        }
-      }
-
-      if (!messageText.trim()) {
-        showToast({
-          style: Toast.Style.Failure,
-          title: "No message found",
-          message: "Please select text or copy a message to your clipboard first",
-        });
-        return;
-      }
-
-      await handleSendMessage(messageText.trim());
-
-      showToast({
-        style: Toast.Style.Success,
-        title: "Message sent",
-        message: "Your message has been sent to the AI",
-      });
-    } catch (error) {
-      showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to send message",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  };
-
   return (
     <ActionPanel>
       {/* Send Message Action - prioritize searchText input */}
