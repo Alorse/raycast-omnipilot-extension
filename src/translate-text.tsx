@@ -36,7 +36,7 @@ export default function TranslateText(props: { arguments: Arguments }) {
     }
 
     fetchSelectedText();
-  }, [hasExecutedRef.current]);
+  }, []);
 
   if (isLoadingText) {
     return <Detail isLoading={true} markdown="Getting selected text..." />;

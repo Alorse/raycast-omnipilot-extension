@@ -19,7 +19,7 @@ export default function ExplainText() {
       try {
         const selected = await getSelectedText();
         setSelectedText(selected);
-      } catch (error) {
+      } catch {
         setSelectedText(null);
       } finally {
         setIsLoadingText(false);
@@ -28,7 +28,7 @@ export default function ExplainText() {
     }
 
     fetchSelectedText();
-  }, [hasExecutedRef.current]);
+  }, []);
 
   if (isLoadingText) {
     return <Detail isLoading={true} markdown="Getting text to explain..." />;
