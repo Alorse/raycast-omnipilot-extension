@@ -1,8 +1,12 @@
-import { LocalStorage, showToast, Toast } from "@raycast/api";
-import { useCallback, useEffect, useState } from "react";
-import { CommandHistoryEntry, UseCommandHistoryResult, TokenUsage } from "../types";
+import { LocalStorage, showToast, Toast } from '@raycast/api';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  CommandHistoryEntry,
+  UseCommandHistoryResult,
+  TokenUsage,
+} from '../types';
 
-const STORAGE_KEY = "omnipilot_command_history";
+const STORAGE_KEY = 'omnipilot_command_history';
 const MAX_HISTORY_ENTRIES = 100;
 const DUPLICATE_CHECK_WINDOW_MS = 5000; // 5 seconds
 
@@ -31,7 +35,9 @@ export function useCommandHistory(): UseCommandHistoryResult {
       const storedHistory = await LocalStorage.getItem<string>(STORAGE_KEY);
 
       if (storedHistory) {
-        const parsedHistory = JSON.parse(storedHistory) as CommandHistoryEntry[];
+        const parsedHistory = JSON.parse(
+          storedHistory,
+        ) as CommandHistoryEntry[];
         // Validate and filter out any invalid entries
         const validHistory = parsedHistory.filter(isValidHistoryEntry);
         setHistory(validHistory);
@@ -39,11 +45,11 @@ export function useCommandHistory(): UseCommandHistoryResult {
         setHistory([]);
       }
     } catch (error) {
-      console.error("Failed to load command history:", error);
+      console.error('Failed to load command history:', error);
       await showToast({
         style: Toast.Style.Failure,
-        title: "Failed to load history",
-        message: error instanceof Error ? error.message : "Unknown error",
+        title: 'Failed to load history',
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
       setHistory([]);
     } finally {
@@ -54,19 +60,22 @@ export function useCommandHistory(): UseCommandHistoryResult {
   /**
    * Save history to LocalStorage
    */
-  const saveHistory = useCallback(async (newHistory: CommandHistoryEntry[]): Promise<void> => {
-    try {
-      await LocalStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
-    } catch (error) {
-      console.error("Failed to save command history:", error);
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to save history",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-      throw error;
-    }
-  }, []);
+  const saveHistory = useCallback(
+    async (newHistory: CommandHistoryEntry[]): Promise<void> => {
+      try {
+        await LocalStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+      } catch (error) {
+        console.error('Failed to save command history:', error);
+        await showToast({
+          style: Toast.Style.Failure,
+          title: 'Failed to save history',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+        throw error;
+      }
+    },
+    [],
+  );
 
   /**
    * Add a new entry to command history
@@ -89,7 +98,7 @@ export function useCommandHistory(): UseCommandHistoryResult {
       usage?: TokenUsage,
     ): Promise<void> => {
       if (!prompt.trim() || !response.trim()) {
-        console.warn("Skipping history entry: prompt or response is empty");
+        console.warn('Skipping history entry: prompt or response is empty');
         return;
       }
 
@@ -114,12 +123,15 @@ export function useCommandHistory(): UseCommandHistoryResult {
           });
 
           if (isDuplicate) {
-            console.log("Skipping duplicate entry");
+            console.log('Skipping duplicate entry');
             return currentHistory;
           }
 
           // Add new entry and limit history size
-          const updatedHistory = [newEntry, ...currentHistory].slice(0, MAX_HISTORY_ENTRIES);
+          const updatedHistory = [newEntry, ...currentHistory].slice(
+            0,
+            MAX_HISTORY_ENTRIES,
+          );
 
           // Save to storage (fire and forget to avoid blocking UI)
           saveHistory(updatedHistory).catch(console.error);
@@ -127,11 +139,11 @@ export function useCommandHistory(): UseCommandHistoryResult {
           return updatedHistory;
         });
       } catch (error) {
-        console.error("Failed to add to command history:", error);
+        console.error('Failed to add to command history:', error);
         await showToast({
           style: Toast.Style.Failure,
-          title: "Failed to save to history",
-          message: error instanceof Error ? error.message : "Unknown error",
+          title: 'Failed to save to history',
+          message: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     },
@@ -147,17 +159,19 @@ export function useCommandHistory(): UseCommandHistoryResult {
     async (id: string): Promise<void> => {
       try {
         setHistory((currentHistory) => {
-          const updatedHistory = currentHistory.filter((entry) => entry.id !== id);
+          const updatedHistory = currentHistory.filter(
+            (entry) => entry.id !== id,
+          );
           // Save to storage
           saveHistory(updatedHistory).catch(console.error);
           return updatedHistory;
         });
       } catch (error) {
-        console.error("Failed to remove history entry:", error);
+        console.error('Failed to remove history entry:', error);
         await showToast({
           style: Toast.Style.Failure,
-          title: "Failed to remove entry",
-          message: error instanceof Error ? error.message : "Unknown error",
+          title: 'Failed to remove entry',
+          message: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     },
@@ -173,15 +187,15 @@ export function useCommandHistory(): UseCommandHistoryResult {
       await LocalStorage.removeItem(STORAGE_KEY);
       await showToast({
         style: Toast.Style.Success,
-        title: "History cleared",
-        message: "All command history has been removed",
+        title: 'History cleared',
+        message: 'All command history has been removed',
       });
     } catch (error) {
-      console.error("Failed to clear command history:", error);
+      console.error('Failed to clear command history:', error);
       await showToast({
         style: Toast.Style.Failure,
-        title: "Failed to clear history",
-        message: error instanceof Error ? error.message : "Unknown error",
+        title: 'Failed to clear history',
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }, []);
@@ -206,13 +220,13 @@ export function useCommandHistory(): UseCommandHistoryResult {
  */
 function isValidHistoryEntry(entry: unknown): entry is CommandHistoryEntry {
   return (
-    typeof entry === "object" &&
+    typeof entry === 'object' &&
     entry !== null &&
-    typeof (entry as Record<string, unknown>).id === "string" &&
-    typeof (entry as Record<string, unknown>).timestamp === "string" &&
-    typeof (entry as Record<string, unknown>).prompt === "string" &&
-    typeof (entry as Record<string, unknown>).response === "string" &&
-    typeof (entry as Record<string, unknown>).model === "string" &&
+    typeof (entry as Record<string, unknown>).id === 'string' &&
+    typeof (entry as Record<string, unknown>).timestamp === 'string' &&
+    typeof (entry as Record<string, unknown>).prompt === 'string' &&
+    typeof (entry as Record<string, unknown>).response === 'string' &&
+    typeof (entry as Record<string, unknown>).model === 'string' &&
     !isNaN(Date.parse((entry as Record<string, unknown>).timestamp as string))
   );
 }

@@ -1,6 +1,6 @@
-import { List, Icon } from "@raycast/api";
-import { useChatLogic } from "../hooks/useChatLogic";
-import { ChatActions, ChatEmptyActions } from "./ChatActions";
+import { List, Icon } from '@raycast/api';
+import { useChatLogic } from '../hooks/useChatLogic';
+import { ChatActions, ChatEmptyActions } from './ChatActions';
 
 export function ChatViewList() {
   const {
@@ -19,7 +19,9 @@ export function ChatViewList() {
   } = useChatLogic();
 
   if (!isInitialized) {
-    return <List isLoading={true} searchBarPlaceholder="Initializing chat..." />;
+    return (
+      <List isLoading={true} searchBarPlaceholder="Initializing chat..." />
+    );
   }
 
   return (
@@ -46,9 +48,15 @@ export function ChatViewList() {
             accessories={[
               conversation.messages.length > 0
                 ? { text: `${conversation.messages.length} messages` }
-                : { text: "No messages yet" },
+                : { text: 'No messages yet' },
             ]}
-            detail={<List.Item.Detail markdown={conversation.id === selectedConversationId ? chatMarkdown : ""} />}
+            detail={
+              <List.Item.Detail
+                markdown={
+                  conversation.id === selectedConversationId ? chatMarkdown : ''
+                }
+              />
+            }
             actions={
               <ChatActions
                 searchText={searchText}
@@ -68,7 +76,11 @@ export function ChatViewList() {
           icon={Icon.Message}
           title="No conversation selected"
           description="Create a new chat to get started"
-          actions={<ChatEmptyActions handleCreateConversation={handleCreateConversation} />}
+          actions={
+            <ChatEmptyActions
+              handleCreateConversation={handleCreateConversation}
+            />
+          }
         />
       )}
     </List>

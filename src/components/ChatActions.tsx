@@ -1,5 +1,5 @@
-import { ActionPanel, Action, Icon } from "@raycast/api";
-import { ChatConversation, ChatMessage } from "../types/chat";
+import { ActionPanel, Action, Icon } from '@raycast/api';
+import { ChatConversation, ChatMessage } from '../types/chat';
 
 interface ChatActionsProps {
   // Required props
@@ -21,7 +21,7 @@ interface ChatActionsProps {
 }
 
 export function ChatActions({
-  searchText = "",
+  searchText = '',
   currentConversation,
   conversations,
   handleSendMessage,
@@ -34,7 +34,8 @@ export function ChatActions({
 }: ChatActionsProps) {
   // Determine which conversation to work with
   const targetConversation = conversationId
-    ? conversations.find((conv) => conv.id === conversationId) || currentConversation
+    ? conversations.find((conv) => conv.id === conversationId) ||
+      currentConversation
     : currentConversation;
 
   return (
@@ -45,33 +46,35 @@ export function ChatActions({
           title="Send Message"
           icon={Icon.Airplane}
           onAction={() => handleSendMessage(searchText)}
-          shortcut={{ modifiers: ["cmd"], key: "enter" }}
+          shortcut={{ modifiers: ['cmd'], key: 'enter' }}
         />
       )}
 
       {/* Conversation switching for Detail view */}
-      {showConversationSwitch && conversations.length > 1 && handleConversationChange && (
-        <ActionPanel.Section title="Switch Conversation">
-          {conversations
-            .filter((conv) => conv.id !== currentConversation?.id)
-            .slice(0, 5) // Show only first 5 other conversations
-            .map((conv) => (
-              <Action
-                key={conv.id}
-                title={`Switch to: ${conv.title}`}
-                icon={Icon.ArrowRight}
-                onAction={() => handleConversationChange!(conv.id)}
-              />
-            ))}
-        </ActionPanel.Section>
-      )}
+      {showConversationSwitch &&
+        conversations.length > 1 &&
+        handleConversationChange && (
+          <ActionPanel.Section title="Switch Conversation">
+            {conversations
+              .filter((conv) => conv.id !== currentConversation?.id)
+              .slice(0, 5) // Show only first 5 other conversations
+              .map((conv) => (
+                <Action
+                  key={conv.id}
+                  title={`Switch to: ${conv.title}`}
+                  icon={Icon.ArrowRight}
+                  onAction={() => handleConversationChange!(conv.id)}
+                />
+              ))}
+          </ActionPanel.Section>
+        )}
 
       {/* New Chat Action */}
       <Action
         title="New Chat"
         icon={Icon.Plus}
         onAction={handleCreateConversation}
-        shortcut={{ modifiers: ["cmd"], key: "n" }}
+        shortcut={{ modifiers: ['cmd'], key: 'n' }}
       />
 
       {/* Copy Actions - only show if conversation has messages */}
@@ -81,19 +84,24 @@ export function ChatActions({
             title="Copy Last Response"
             content={
               targetConversation.messages.length > 0
-                ? targetConversation.messages[targetConversation.messages.length - 1]?.content || ""
-                : ""
+                ? targetConversation.messages[
+                    targetConversation.messages.length - 1
+                  ]?.content || ''
+                : ''
             }
             icon={Icon.Clipboard}
-            shortcut={{ modifiers: ["cmd"], key: "c" }}
+            shortcut={{ modifiers: ['cmd'], key: 'c' }}
           />
           <Action.CopyToClipboard
             title="Copy Entire Conversation"
             content={targetConversation.messages
-              .map((msg: ChatMessage) => `${msg.role.toUpperCase()}: ${msg.content}`)
-              .join("\n\n")}
+              .map(
+                (msg: ChatMessage) =>
+                  `${msg.role.toUpperCase()}: ${msg.content}`,
+              )
+              .join('\n\n')}
             icon={Icon.CopyClipboard}
-            shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            shortcut={{ modifiers: ['cmd', 'shift'], key: 'c' }}
           />
         </ActionPanel.Section>
       )}
@@ -106,7 +114,7 @@ export function ChatActions({
             icon={Icon.Trash}
             style={Action.Style.Destructive}
             onAction={() => handleDeleteConversation(targetConversation.id)}
-            shortcut={{ modifiers: ["cmd"], key: "d" }}
+            shortcut={{ modifiers: ['cmd'], key: 'd' }}
           />
         </ActionPanel.Section>
       )}
@@ -115,14 +123,18 @@ export function ChatActions({
 }
 
 // Alternative version for EmptyView when no conversations exist
-export function ChatEmptyActions({ handleCreateConversation }: { handleCreateConversation: () => Promise<void> }) {
+export function ChatEmptyActions({
+  handleCreateConversation,
+}: {
+  handleCreateConversation: () => Promise<void>;
+}) {
   return (
     <ActionPanel>
       <Action
         title="New Chat"
         icon={Icon.Plus}
         onAction={handleCreateConversation}
-        shortcut={{ modifiers: ["cmd"], key: "n" }}
+        shortcut={{ modifiers: ['cmd'], key: 'n' }}
       />
     </ActionPanel>
   );

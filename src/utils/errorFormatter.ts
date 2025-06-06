@@ -2,10 +2,13 @@
  * Format error messages with helpful context and suggestions
  */
 export function formatErrorMessage(errorMessage: string): string {
-  const baseMessage = "❌ **Error processing your request**\n\n";
+  const baseMessage = '❌ **Error processing your request**\n\n';
 
   // Check for specific error types and provide helpful guidance
-  if (errorMessage.includes("model not found") || errorMessage.includes("model_not_found")) {
+  if (
+    errorMessage.includes('model not found') ||
+    errorMessage.includes('model_not_found')
+  ) {
     return (
       `${baseMessage}🔍 **Model not found**\n\n` +
       `The specified model does not exist or is not available.\n\n` +
@@ -18,9 +21,9 @@ export function formatErrorMessage(errorMessage: string): string {
   }
 
   if (
-    errorMessage.includes("Invalid API key") ||
-    errorMessage.includes("Unauthorized") ||
-    errorMessage.includes("401")
+    errorMessage.includes('Invalid API key') ||
+    errorMessage.includes('Unauthorized') ||
+    errorMessage.includes('401')
   ) {
     return (
       `${baseMessage}🔑 **Invalid API Key**\n\n` +
@@ -33,7 +36,7 @@ export function formatErrorMessage(errorMessage: string): string {
     );
   }
 
-  if (errorMessage.includes("Rate limit") || errorMessage.includes("429")) {
+  if (errorMessage.includes('Rate limit') || errorMessage.includes('429')) {
     return (
       `${baseMessage}⏱️ **Rate limit exceeded**\n\n` +
       `You've made too many requests too quickly.\n\n` +
@@ -45,7 +48,11 @@ export function formatErrorMessage(errorMessage: string): string {
     );
   }
 
-  if (errorMessage.includes("insufficient") || errorMessage.includes("quota") || errorMessage.includes("credits")) {
+  if (
+    errorMessage.includes('insufficient') ||
+    errorMessage.includes('quota') ||
+    errorMessage.includes('credits')
+  ) {
     return (
       `${baseMessage}💳 **Insufficient funds**\n\n` +
       `You don't have enough credits or have exceeded your quota.\n\n` +
@@ -57,7 +64,7 @@ export function formatErrorMessage(errorMessage: string): string {
     );
   }
 
-  if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
+  if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
     return (
       `${baseMessage}⏰ **Request timeout**\n\n` +
       `The request took too long to process.\n\n` +
@@ -69,7 +76,11 @@ export function formatErrorMessage(errorMessage: string): string {
     );
   }
 
-  if (errorMessage.includes("network") || errorMessage.includes("connection") || errorMessage.includes("fetch")) {
+  if (
+    errorMessage.includes('network') ||
+    errorMessage.includes('connection') ||
+    errorMessage.includes('fetch')
+  ) {
     return (
       `${baseMessage}🌐 **Connection error**\n\n` +
       `Could not establish connection to the AI service.\n\n` +

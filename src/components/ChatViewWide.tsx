@@ -1,6 +1,6 @@
-import { List, Icon } from "@raycast/api";
-import { useChatLogic } from "../hooks/useChatLogic";
-import { ChatActions, ChatEmptyActions } from "./ChatActions";
+import { List, Icon } from '@raycast/api';
+import { useChatLogic } from '../hooks/useChatLogic';
+import { ChatActions, ChatEmptyActions } from './ChatActions';
 
 export function ChatViewWide() {
   const {
@@ -19,7 +19,9 @@ export function ChatViewWide() {
   } = useChatLogic();
 
   if (!isInitialized) {
-    return <List isLoading={true} searchBarPlaceholder="Initializing chat..." />;
+    return (
+      <List isLoading={true} searchBarPlaceholder="Initializing chat..." />
+    );
   }
 
   return (
@@ -31,7 +33,7 @@ export function ChatViewWide() {
       searchBarAccessory={
         <List.Dropdown
           tooltip="Select Conversation"
-          value={selectedConversationId || ""}
+          value={selectedConversationId || ''}
           onChange={(value) => value && handleConversationChange(value)}
         >
           <List.Dropdown.Section title="Conversations">
@@ -53,22 +55,26 @@ export function ChatViewWide() {
           icon={Icon.Message}
           title="No conversations found"
           description="Create your first chat to get started!"
-          actions={<ChatEmptyActions handleCreateConversation={handleCreateConversation} />}
+          actions={
+            <ChatEmptyActions
+              handleCreateConversation={handleCreateConversation}
+            />
+          }
         />
       ) : (
         <>
           {/* Single wide item that represents the full chat view */}
           <List.Item
-            key={currentConversation?.id || "chat-view"}
-            id={currentConversation?.id || "chat-view"}
-            title={""}
+            key={currentConversation?.id || 'chat-view'}
+            id={currentConversation?.id || 'chat-view'}
+            title={''}
             icon={Icon.Message}
             detail={
               <List.Item.Detail
                 markdown={
                   currentConversation
                     ? chatMarkdown
-                    : "# 💬 Welcome to OmniPilot Chat\n\nSelect a conversation from the dropdown above to start chatting."
+                    : '# 💬 Welcome to OmniPilot Chat\n\nSelect a conversation from the dropdown above to start chatting.'
                 }
               />
             }

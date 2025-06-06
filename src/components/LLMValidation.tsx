@@ -1,6 +1,14 @@
-import React from "react";
-import { Detail, Action, ActionPanel, Icon, showToast, Toast, Clipboard } from "@raycast/api";
-import { getLLMStatus, getLLMStatusDescription } from "../utils/llmStatus";
+import React from 'react';
+import {
+  Detail,
+  Action,
+  ActionPanel,
+  Icon,
+  showToast,
+  Toast,
+  Clipboard,
+} from '@raycast/api';
+import { getLLMStatus, getLLMStatusDescription } from '../utils/llmStatus';
 
 interface LLMValidationProps {
   children: React.ReactNode;
@@ -17,12 +25,16 @@ interface LLMValidationState {
  * Higher-order component that validates LLM configurations before allowing AI commands to execute
  * If no valid LLM configurations are found, shows a helpful error screen with actions to fix the issue
  */
-export function LLMValidation({ children, onValidationPassed }: LLMValidationProps) {
-  const [validationState, setValidationState] = React.useState<LLMValidationState>({
-    isValid: false,
-    isLoading: true,
-    statusMessage: "Checking LLM configurations...",
-  });
+export function LLMValidation({
+  children,
+  onValidationPassed,
+}: LLMValidationProps) {
+  const [validationState, setValidationState] =
+    React.useState<LLMValidationState>({
+      isValid: false,
+      isLoading: true,
+      statusMessage: 'Checking LLM configurations...',
+    });
 
   React.useEffect(() => {
     validateLLMConfigs();
@@ -33,13 +45,17 @@ export function LLMValidation({ children, onValidationPassed }: LLMValidationPro
       setValidationState({
         isValid: false,
         isLoading: true,
-        statusMessage: "Checking LLM configurations...",
+        statusMessage: 'Checking LLM configurations...',
       });
 
       const status = await getLLMStatus();
       const statusDescription = await getLLMStatusDescription();
 
-      if (status.hasValidConfigs && status.activeConfig && status.activeConfig.apiKey) {
+      if (
+        status.hasValidConfigs &&
+        status.activeConfig &&
+        status.activeConfig.apiKey
+      ) {
         // Valid configuration found
         setValidationState({
           isValid: true,
@@ -56,11 +72,11 @@ export function LLMValidation({ children, onValidationPassed }: LLMValidationPro
         });
       }
     } catch (error) {
-      console.error("Error validating LLM configurations:", error);
+      console.error('Error validating LLM configurations:', error);
       setValidationState({
         isValid: false,
         isLoading: false,
-        statusMessage: "Failed to check LLM configurations. Please try again.",
+        statusMessage: 'Failed to check LLM configurations. Please try again.',
       });
     }
   };
@@ -83,7 +99,7 @@ export function LLMValidation({ children, onValidationPassed }: LLMValidationPro
                 title="Refresh and Check Again"
                 icon={Icon.ArrowClockwise}
                 onAction={validateLLMConfigs}
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
+                shortcut={{ modifiers: ['cmd'], key: 'r' }}
               />
             </ActionPanel.Section>
             <ActionPanel.Section title="Help">
@@ -95,11 +111,11 @@ export function LLMValidation({ children, onValidationPassed }: LLMValidationPro
                   await Clipboard.copy(setupInstructions);
                   showToast({
                     style: Toast.Style.Success,
-                    title: "Instructions copied",
-                    message: "Setup instructions copied to clipboard",
+                    title: 'Instructions copied',
+                    message: 'Setup instructions copied to clipboard',
                   });
                 }}
-                shortcut={{ modifiers: ["cmd"], key: "c" }}
+                shortcut={{ modifiers: ['cmd'], key: 'c' }}
               />
             </ActionPanel.Section>
           </ActionPanel>
@@ -143,7 +159,7 @@ Need help? Check the extension preferences or documentation for detailed setup i
 
 function getErrorMarkdown(state: LLMValidationState): string {
   if (state.isLoading) {
-    return "🔍 **Checking LLM Configurations...**\n\nPlease wait while we verify your AI provider settings.";
+    return '🔍 **Checking LLM Configurations...**\n\nPlease wait while we verify your AI provider settings.';
   }
 
   return `❌ **LLM Configuration Required**

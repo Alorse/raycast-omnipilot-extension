@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { LLMConfig, LLMConfigFormData } from "../types/llmConfig";
-import { LLMConfigManager } from "../services/llmConfigManager";
+import { useState, useEffect } from 'react';
+import { LLMConfig, LLMConfigFormData } from '../types/llmConfig';
+import { LLMConfigManager } from '../services/llmConfigManager';
 
 export function useLLMConfigs() {
   const [configs, setConfigs] = useState<LLMConfig[]>([]);
@@ -19,8 +19,12 @@ export function useLLMConfigs() {
       setConfigs(allConfigs);
       setActiveConfig(active);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load LLM configurations");
-      console.error("Error loading LLM configs:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to load LLM configurations',
+      );
+      console.error('Error loading LLM configs:', err);
     } finally {
       setIsLoading(false);
     }
@@ -32,7 +36,8 @@ export function useLLMConfigs() {
       await loadConfigs(); // Refresh the list
       return newConfig;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to add LLM configuration";
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to add LLM configuration';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -45,9 +50,12 @@ export function useLLMConfigs() {
         await loadConfigs(); // Refresh the list
         return updatedConfig;
       }
-      throw new Error("Configuration not found");
+      throw new Error('Configuration not found');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update LLM configuration";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to update LLM configuration';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -60,9 +68,12 @@ export function useLLMConfigs() {
         await loadConfigs(); // Refresh the list
         return true;
       }
-      throw new Error("Configuration not found");
+      throw new Error('Configuration not found');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to delete LLM configuration";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete LLM configuration';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -73,7 +84,8 @@ export function useLLMConfigs() {
       await LLMConfigManager.setActiveLLM(id);
       await loadConfigs(); // Refresh to get the new active config
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to set active LLM";
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to set active LLM';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -86,9 +98,12 @@ export function useLLMConfigs() {
         await loadConfigs(); // Refresh the list
         return duplicate;
       }
-      throw new Error("Configuration not found");
+      throw new Error('Configuration not found');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to duplicate LLM configuration";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to duplicate LLM configuration';
       setError(errorMessage);
       throw new Error(errorMessage);
     }

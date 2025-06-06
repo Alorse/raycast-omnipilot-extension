@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { initializeLLMConfigs } from "../services/openrouter";
+import { useEffect } from 'react';
+import { initializeLLMConfigs } from '../services/openrouter';
 
 /**
  * Initialize LLM configurations on extension startup
@@ -9,9 +9,9 @@ export function useInitialization() {
     const initialize = async () => {
       try {
         await initializeLLMConfigs();
-        console.log("LLM configurations initialized successfully");
+        console.log('LLM configurations initialized successfully');
       } catch (error) {
-        console.error("Failed to initialize LLM configurations:", error);
+        console.error('Failed to initialize LLM configurations:', error);
       }
     };
 

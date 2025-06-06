@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { Detail } from "@raycast/api";
-import { useAIStreaming } from "../hooks/useAIStreaming";
-import { useCommandHistory } from "../hooks/useCommandHistory";
-import { LLMConfigManager } from "../services/llmConfigManager";
-import { getProviderName } from "../utils/providers";
+import { useEffect, useRef, useState } from 'react';
+import { Detail } from '@raycast/api';
+import { useAIStreaming } from '../hooks/useAIStreaming';
+import { useCommandHistory } from '../hooks/useCommandHistory';
+import { LLMConfigManager } from '../services/llmConfigManager';
+import { getProviderName } from '../utils/providers';
 
 interface CommandTemplateProps {
   userQuery: string;
@@ -14,13 +14,19 @@ interface CommandTemplateProps {
 /**
  * Reusable template for AI-powered commands
  */
-export function CommandTemplate({ userQuery, customPrompt, customModel }: CommandTemplateProps) {
+export function CommandTemplate({
+  userQuery,
+  customPrompt,
+  customModel,
+}: CommandTemplateProps) {
   const hasExecutedRef = useRef(false);
   const { response, isLoading, tokenUsage, askAI } = useAIStreaming();
   const { addToHistory } = useCommandHistory();
-  const [currentConfig, setCurrentConfig] = useState<{ model: string; provider: string; configName?: string } | null>(
-    null,
-  );
+  const [currentConfig, setCurrentConfig] = useState<{
+    model: string;
+    provider: string;
+    configName?: string;
+  } | null>(null);
   const query = customPrompt ? `${customPrompt}: ${userQuery}` : userQuery;
 
   // Load current LLM configuration info
@@ -37,15 +43,15 @@ export function CommandTemplate({ userQuery, customPrompt, customModel }: Comman
           });
         } else {
           setCurrentConfig({
-            model: "No configuration",
-            provider: "None",
+            model: 'No configuration',
+            provider: 'None',
           });
         }
       } catch (error) {
-        console.error("Error loading config info:", error);
+        console.error('Error loading config info:', error);
         setCurrentConfig({
-          model: "Error",
-          provider: "Unknown",
+          model: 'Error',
+          provider: 'Unknown',
         });
       }
     };
@@ -81,7 +87,12 @@ export function CommandTemplate({ userQuery, customPrompt, customModel }: Comman
   return (
     <Detail
       isLoading={isLoading}
-      markdown={response || (query ? "" : "No query provided. Please provide a query as an argument.")}
+      markdown={
+        response ||
+        (query
+          ? ''
+          : 'No query provided. Please provide a query as an argument.')
+      }
       // metadata={
       //   currentConfig ? (
       //     <Detail.Metadata>

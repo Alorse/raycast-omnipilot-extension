@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { showToast, Toast, getPreferenceValues } from "@raycast/api";
-import { useChat } from "./useChat";
-import { useAIStreaming } from "./useAIStreaming";
-import { OpenRouterMessage } from "../types";
-import { ChatMessage } from "../types/chat";
-import { LLMConfigManager } from "../services/llmConfigManager";
-import { getProviderName } from "../utils/providers";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { showToast, Toast, getPreferenceValues } from '@raycast/api';
+import { useChat } from './useChat';
+import { useAIStreaming } from './useAIStreaming';
+import { OpenRouterMessage } from '../types';
+import { ChatMessage } from '../types/chat';
+import { LLMConfigManager } from '../services/llmConfigManager';
+import { getProviderName } from '../utils/providers';
 
 interface Preferences {
   systemPrompt: string;
@@ -48,17 +48,19 @@ export function useChatLogic() {
     deleteConversation,
   } = useChat();
 
-  const { response, isLoading, tokenUsage, chatWithHistory, clearResponse } = useAIStreaming();
+  const { response, isLoading, tokenUsage, chatWithHistory, clearResponse } =
+    useAIStreaming();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [selectedConversationId, setSelectedConversationId] = useState<string>("");
+  const [searchText, setSearchText] = useState('');
+  const [selectedConversationId, setSelectedConversationId] =
+    useState<string>('');
   const [currentConfig, setCurrentConfig] = useState<{
     model: string;
     provider: string;
     configName?: string;
   } | null>(null);
 
-  const responseStartRef = useRef<string>("");
+  const responseStartRef = useRef<string>('');
   const processingResponseRef = useRef(false);
 
   // Single initialization effect
@@ -77,11 +79,11 @@ export function useChatLogic() {
 
         setIsInitialized(true);
       } catch (error) {
-        console.error("Failed to initialize chat:", error);
+        console.error('Failed to initialize chat:', error);
         showToast({
           style: Toast.Style.Failure,
-          title: "Failed to initialize chat",
-          message: error instanceof Error ? error.message : "Unknown error",
+          title: 'Failed to initialize chat',
+          message: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -108,30 +110,48 @@ export function useChatLogic() {
     };
 
     manageConversations().catch((error) => {
-      console.error("Failed to manage conversations:", error);
+      console.error('Failed to manage conversations:', error);
     });
-  }, [isInitialized, conversations.length, currentConversation, createConversation, setCurrentConversation]);
+  }, [
+    isInitialized,
+    conversations.length,
+    currentConversation,
+    createConversation,
+    setCurrentConversation,
+  ]);
 
   // Handle AI response processing
   useEffect(() => {
-    if (response && !isLoading && !processingResponseRef.current && currentConversation) {
+    if (
+      response &&
+      !isLoading &&
+      !processingResponseRef.current &&
+      currentConversation
+    ) {
       // Only process if response has changed from what we started with
       if (response !== responseStartRef.current && response.trim()) {
         processingResponseRef.current = true;
 
-        addMessage(response, "assistant", tokenUsage || undefined)
+        addMessage(response, 'assistant', tokenUsage || undefined)
           .then(() => {
             clearResponse();
-            responseStartRef.current = "";
+            responseStartRef.current = '';
             processingResponseRef.current = false;
           })
           .catch((error) => {
-            console.error("Failed to add AI response:", error);
+            console.error('Failed to add AI response:', error);
             processingResponseRef.current = false;
           });
       }
     }
-  }, [response, isLoading, tokenUsage, currentConversation, addMessage, clearResponse]);
+  }, [
+    response,
+    isLoading,
+    tokenUsage,
+    currentConversation,
+    addMessage,
+    clearResponse,
+  ]);
 
   const handleSendMessage = useCallback(
     async (messageText: string) => {
@@ -140,10 +160,10 @@ export function useChatLogic() {
 
       try {
         // Clear the search text immediately
-        setSearchText("");
+        setSearchText('');
 
         // Add user message
-        await addMessage(userMessage, "user");
+        await addMessage(userMessage, 'user');
 
         // Get conversation context for AI and build complete message history
         const conversationHistory = getConversationContext(currentConversation);
@@ -151,14 +171,14 @@ export function useChatLogic() {
         // Build the complete message array including system prompt and conversation history
         const messages: OpenRouterMessage[] = [
           {
-            role: "system",
+            role: 'system',
             content:
               preferences.systemPrompt ||
-              "You are a helpful AI assistant. Maintain context from the conversation history and provide thoughtful, relevant responses.",
+              'You are a helpful AI assistant. Maintain context from the conversation history and provide thoughtful, relevant responses.',
           },
           ...conversationHistory,
           {
-            role: "user",
+            role: 'user',
             content: userMessage,
           },
         ];
@@ -169,11 +189,11 @@ export function useChatLogic() {
 
         await chatWithHistory(messages);
       } catch (error) {
-        console.error("Failed to send message:", error);
+        console.error('Failed to send message:', error);
         showToast({
           style: Toast.Style.Failure,
-          title: "Failed to send message",
-          message: error instanceof Error ? error.message : "Unknown error",
+          title: 'Failed to send message',
+          message: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     },
@@ -195,7 +215,7 @@ export function useChatLogic() {
         setCurrentConversation(conversation);
         setSelectedConversationId(conversationId);
       } else {
-        console.error("Conversation not found with ID:", conversationId);
+        console.error('Conversation not found with ID:', conversationId);
       }
     },
     [conversations, setCurrentConversation],
@@ -203,13 +223,14 @@ export function useChatLogic() {
 
   const handleDeleteConversation = useCallback(
     async (conversationId: string) => {
-      const { confirmAlert, Alert } = await import("@raycast/api");
+      const { confirmAlert, Alert } = await import('@raycast/api');
 
       const confirmed = await confirmAlert({
-        title: "Delete Conversation",
-        message: "Are you sure you want to delete this conversation? This action cannot be undone.",
+        title: 'Delete Conversation',
+        message:
+          'Are you sure you want to delete this conversation? This action cannot be undone.',
         primaryAction: {
-          title: "Delete",
+          title: 'Delete',
           style: Alert.ActionStyle.Destructive,
         },
       });
@@ -219,7 +240,9 @@ export function useChatLogic() {
 
         // Switch to another conversation if the current one was deleted
         if (currentConversation?.id === conversationId) {
-          const remainingConversations = conversations.filter((c) => c.id !== conversationId);
+          const remainingConversations = conversations.filter(
+            (c) => c.id !== conversationId,
+          );
           if (remainingConversations.length > 0) {
             setCurrentConversation(remainingConversations[0]);
             setSelectedConversationId(remainingConversations[0].id);
@@ -230,21 +253,27 @@ export function useChatLogic() {
         }
       }
     },
-    [currentConversation, conversations, deleteConversation, setCurrentConversation, createConversation],
+    [
+      currentConversation,
+      conversations,
+      deleteConversation,
+      setCurrentConversation,
+      createConversation,
+    ],
   );
 
   const handleCreateConversation = useCallback(async () => {
     await createConversation();
     showToast({
       style: Toast.Style.Success,
-      title: "New chat created",
+      title: 'New chat created',
     });
   }, [createConversation]);
 
   const formatMessageTime = useCallback((timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }, []);
 
@@ -255,8 +284,8 @@ export function useChatLogic() {
   // Add current streaming response as a temporary message
   if (isLoading && response) {
     allMessages.push({
-      id: "streaming",
-      role: "assistant" as const,
+      id: 'streaming',
+      role: 'assistant' as const,
       content: response,
       timestamp: new Date().toISOString(),
     });
@@ -265,16 +294,19 @@ export function useChatLogic() {
   // Build chat content as markdown for better readability
   const buildChatMarkdown = useCallback(() => {
     if (!currentConversation || allMessages.length === 0) {
-      return `# 💬 Chat with ${currentConfig?.model || "AI"}
+      return `# 💬 Chat with ${currentConfig?.model || 'AI'}
 
 *No messages yet. Type your message above and press Enter to start the conversation.*`;
     }
 
     const chatContent = allMessages
       .map((message) => {
-        const role = message.role === "user" ? "👤 **You**" : "🤖 **Assistant**";
+        const role =
+          message.role === 'user' ? '👤 **You**' : '🤖 **Assistant**';
         const time = formatMessageTime(message.timestamp);
-        const tokens = message.tokenUsage ? ` *(${message.tokenUsage.total_tokens} tokens)*` : "";
+        const tokens = message.tokenUsage
+          ? ` *(${message.tokenUsage.total_tokens} tokens)*`
+          : '';
 
         return `${role} ${tokens} - ${time}
 
@@ -282,7 +314,7 @@ ${message.content}
 
 ---`;
       })
-      .join("\n\n");
+      .join('\n\n');
 
     return chatContent;
   }, [allMessages, currentConversation, currentConfig, formatMessageTime]);

@@ -9,7 +9,7 @@ export interface Preferences {
 }
 
 export interface OpenRouterMessage {
-  role: "system" | "user" | "assistant";
+  role: 'system' | 'user' | 'assistant';
   content: string;
 }
 

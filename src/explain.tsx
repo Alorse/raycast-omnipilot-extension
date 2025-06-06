@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { getSelectedText, Detail } from "@raycast/api";
-import { CommandTemplate } from "./lib/commandTemplate";
-import { LLMValidation } from "./components/LLMValidation";
+import { useState, useEffect } from 'react';
+import { getSelectedText, Detail } from '@raycast/api';
+import { CommandTemplate } from './lib/commandTemplate';
+import { LLMValidation } from './components/LLMValidation';
 
 export default function ExplainText() {
-  const [selectedText, setSelectedText] = useState<string | null>("");
+  const [selectedText, setSelectedText] = useState<string | null>('');
   const [isLoadingText, setIsLoadingText] = useState(true);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export default function ExplainText() {
         setSelectedText(selected);
       } catch (error) {
         // getSelectedText() throws an error when no text is selected
-        console.log("No text selected:", error);
+        console.log('No text selected:', error);
         setSelectedText(null);
       } finally {
         setIsLoadingText(false);

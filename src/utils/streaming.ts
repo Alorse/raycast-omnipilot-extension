@@ -1,4 +1,4 @@
-import { OpenRouterStreamChunk, TokenUsage } from "../types";
+import { OpenRouterStreamChunk, TokenUsage } from '../types';
 
 /**
  * Processes a streaming response from OpenRouter API
@@ -12,12 +12,12 @@ export async function processStreamingResponse(
 ): Promise<{ fullResponse: string; usage?: TokenUsage }> {
   const reader = response.body?.getReader();
   if (!reader) {
-    throw new Error("Response body is not readable");
+    throw new Error('Response body is not readable');
   }
 
   const decoder = new TextDecoder();
-  let buffer = "";
-  let fullResponse = "";
+  let buffer = '';
+  let fullResponse = '';
   let usage: TokenUsage | undefined;
 
   try {
@@ -30,15 +30,15 @@ export async function processStreamingResponse(
 
       // Process complete lines from buffer
       while (true) {
-        const lineEnd = buffer.indexOf("\n");
+        const lineEnd = buffer.indexOf('\n');
         if (lineEnd === -1) break;
 
         const line = buffer.slice(0, lineEnd).trim();
         buffer = buffer.slice(lineEnd + 1);
 
-        if (line.startsWith("data: ")) {
+        if (line.startsWith('data: ')) {
           const data = line.slice(6);
-          if (data === "[DONE]") break;
+          if (data === '[DONE]') break;
 
           try {
             const parsed: OpenRouterStreamChunk = JSON.parse(data);

@@ -1,17 +1,25 @@
-import { Action, ActionPanel, List, Icon, confirmAlert, Alert } from "@raycast/api";
-import { useCommandHistory } from "./hooks/useCommandHistory";
-import { CommandHistoryEntry } from "./types";
-import { getProviderColor, getProviderIcon } from "./utils/providers";
+import {
+  Action,
+  ActionPanel,
+  List,
+  Icon,
+  confirmAlert,
+  Alert,
+} from '@raycast/api';
+import { useCommandHistory } from './hooks/useCommandHistory';
+import { CommandHistoryEntry } from './types';
+import { getProviderColor, getProviderIcon } from './utils/providers';
 
 export default function CommandHistory() {
   const { history, isLoading, clearHistory, removeEntry } = useCommandHistory();
 
   const handleClearHistory = async () => {
     const confirmed = await confirmAlert({
-      title: "Clear Command History",
-      message: "Are you sure you want to clear all command history? This action cannot be undone.",
+      title: 'Clear Command History',
+      message:
+        'Are you sure you want to clear all command history? This action cannot be undone.',
       primaryAction: {
-        title: "Clear All",
+        title: 'Clear All',
         style: Alert.ActionStyle.Destructive,
       },
     });
@@ -23,10 +31,10 @@ export default function CommandHistory() {
 
   const handleRemoveEntry = async (id: string) => {
     const confirmed = await confirmAlert({
-      title: "Remove Entry",
-      message: "Are you sure you want to remove this entry from history?",
+      title: 'Remove Entry',
+      message: 'Are you sure you want to remove this entry from history?',
       primaryAction: {
-        title: "Remove",
+        title: 'Remove',
         style: Alert.ActionStyle.Destructive,
       },
     });
@@ -44,22 +52,25 @@ export default function CommandHistory() {
   const formatRelativeDate = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const diffInHours = Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const diffInHours =
+      Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
     if (diffInHours < 1) {
       const minutes = Math.floor(diffInHours * 60);
-      return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
     } else if (diffInHours < 24) {
       const hours = Math.floor(diffInHours);
-      return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
     } else {
       const days = Math.floor(diffInHours / 24);
-      return `${days} day${days !== 1 ? "s" : ""} ago`;
+      return `${days} day${days !== 1 ? 's' : ''} ago`;
     }
   };
 
   const truncateText = (text: string, maxLength: number = 100) => {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + '...'
+      : text;
   };
 
   return (
@@ -75,7 +86,7 @@ export default function CommandHistory() {
               icon={Icon.Trash}
               style={Action.Style.Destructive}
               onAction={handleClearHistory}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "delete" }}
+              shortcut={{ modifiers: ['cmd', 'shift'], key: 'delete' }}
             />
           </ActionPanel>
         ) : undefined
@@ -121,7 +132,7 @@ ${entry.response}`}
                     )}
                     <List.Item.Detail.Metadata.TagList title="Model">
                       <List.Item.Detail.Metadata.TagList.Item
-                        text={entry.model || "Unknown"}
+                        text={entry.model || 'Unknown'}
                         color="#4A90E2"
                         icon={Icon.ComputerChip}
                       />
@@ -155,8 +166,16 @@ ${entry.response}`}
             actions={
               <ActionPanel>
                 <ActionPanel.Section title="Copy Actions">
-                  <Action.CopyToClipboard title="Copy Response" content={entry.response} icon={Icon.Clipboard} />
-                  <Action.CopyToClipboard title="Copy Prompt" content={entry.prompt} icon={Icon.Document} />
+                  <Action.CopyToClipboard
+                    title="Copy Response"
+                    content={entry.response}
+                    icon={Icon.Clipboard}
+                  />
+                  <Action.CopyToClipboard
+                    title="Copy Prompt"
+                    content={entry.prompt}
+                    icon={Icon.Document}
+                  />
                   <Action.CopyToClipboard
                     title="Copy Full Conversation"
                     content={`**Prompt:** ${entry.prompt}\n\n**Response:** ${entry.response}`}

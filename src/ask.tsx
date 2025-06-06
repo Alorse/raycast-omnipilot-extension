@@ -1,6 +1,6 @@
-import { CommandTemplate } from "./lib/commandTemplate";
-import { useInitialization } from "./hooks/useInitialization";
-import { LLMValidation } from "./components/LLMValidation";
+import { CommandTemplate } from './lib/commandTemplate';
+import { useInitialization } from './hooks/useInitialization';
+import { LLMValidation } from './components/LLMValidation';
 
 interface Arguments {
   query: string;

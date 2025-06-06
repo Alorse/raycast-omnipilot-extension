@@ -1,8 +1,8 @@
-import { LocalStorage } from "@raycast/api";
-import { LLMConfig, LLMConfigFormData, DEFAULT_LLMS } from "../types/llmConfig";
+import { LocalStorage } from '@raycast/api';
+import { LLMConfig, LLMConfigFormData, DEFAULT_LLMS } from '../types/llmConfig';
 
-const STORAGE_KEY = "llm-configurations";
-const ACTIVE_LLM_KEY = "active-llm-id";
+const STORAGE_KEY = 'llm-configurations';
+const ACTIVE_LLM_KEY = 'active-llm-id';
 
 export class LLMConfigManager {
   static async getAllConfigs(): Promise<LLMConfig[]> {
@@ -13,7 +13,7 @@ export class LLMConfigManager {
       }
       return JSON.parse(stored);
     } catch (error) {
-      console.error("Error loading LLM configurations:", error);
+      console.error('Error loading LLM configurations:', error);
       return [];
     }
   }
@@ -22,7 +22,7 @@ export class LLMConfigManager {
     try {
       await LocalStorage.setItem(STORAGE_KEY, JSON.stringify(configs));
     } catch (error) {
-      console.error("Error saving LLM configurations:", error);
+      console.error('Error saving LLM configurations:', error);
       throw error;
     }
   }
@@ -49,7 +49,10 @@ export class LLMConfigManager {
     return newConfig;
   }
 
-  static async updateConfig(id: string, formData: LLMConfigFormData): Promise<LLMConfig | null> {
+  static async updateConfig(
+    id: string,
+    formData: LLMConfigFormData,
+  ): Promise<LLMConfig | null> {
     const configs = await this.getAllConfigs();
     const configIndex = configs.findIndex((c) => c.id === id);
 
@@ -123,7 +126,7 @@ export class LLMConfigManager {
       const activeId = await LocalStorage.getItem<string>(ACTIVE_LLM_KEY);
       return activeId || null;
     } catch (error) {
-      console.error("Error getting active LLM ID:", error);
+      console.error('Error getting active LLM ID:', error);
       return null;
     }
   }
@@ -136,7 +139,7 @@ export class LLMConfigManager {
         await LocalStorage.removeItem(ACTIVE_LLM_KEY);
       }
     } catch (error) {
-      console.error("Error setting active LLM:", error);
+      console.error('Error setting active LLM:', error);
       throw error;
     }
   }
@@ -145,17 +148,19 @@ export class LLMConfigManager {
     const existing = await this.getAllConfigs();
 
     if (existing.length === 0) {
-      console.log("Initializing default LLM configurations...");
+      console.log('Initializing default LLM configurations...');
 
       // Create empty configs that users can fill in
-      const defaultConfigs: LLMConfig[] = DEFAULT_LLMS.map((template, index) => ({
-        ...template,
-        id: `default-${index}`,
-        apiKey: "", // Users will need to fill this in
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isActive: index === 0,
-      }));
+      const defaultConfigs: LLMConfig[] = DEFAULT_LLMS.map(
+        (template, index) => ({
+          ...template,
+          id: `default-${index}`,
+          apiKey: '', // Users will need to fill this in
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isActive: index === 0,
+        }),
+      );
 
       await this.saveConfigs(defaultConfigs);
     }

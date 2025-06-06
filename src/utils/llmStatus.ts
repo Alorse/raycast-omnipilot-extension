@@ -1,6 +1,6 @@
-import { LLMConfigManager } from "../services/llmConfigManager";
-import { LLMConfig } from "../types/llmConfig";
-import { getProviderName } from "./providers";
+import { LLMConfigManager } from '../services/llmConfigManager';
+import { LLMConfig } from '../types/llmConfig';
+import { getProviderName } from './providers';
 
 /**
  * Get a summary of the current LLM configuration status
@@ -16,17 +16,19 @@ export async function getLLMStatus(): Promise<{
   try {
     const configs = await LLMConfigManager.getAllConfigs();
     const activeConfig = await LLMConfigManager.getActiveLLM();
-    const configsWithKeys = configs.filter((c) => c.apiKey && c.apiKey.length > 0).length;
+    const configsWithKeys = configs.filter(
+      (c) => c.apiKey && c.apiKey.length > 0,
+    ).length;
 
-    let status = "Ready";
+    let status = 'Ready';
     if (configs.length === 0) {
-      status = "No configurations found";
+      status = 'No configurations found';
     } else if (configsWithKeys === 0) {
-      status = "No API keys configured";
+      status = 'No API keys configured';
     } else if (!activeConfig) {
-      status = "No active configuration selected";
+      status = 'No active configuration selected';
     } else if (!activeConfig.apiKey) {
-      status = "Active configuration missing API key";
+      status = 'Active configuration missing API key';
     }
 
     return {
@@ -37,13 +39,13 @@ export async function getLLMStatus(): Promise<{
       status,
     };
   } catch (error) {
-    console.error("Error getting LLM status:", error);
+    console.error('Error getting LLM status:', error);
     return {
       totalConfigs: 0,
       activeConfig: null,
       hasValidConfigs: false,
       configsWithKeys: 0,
-      status: "Error loading configurations",
+      status: 'Error loading configurations',
     };
   }
 }

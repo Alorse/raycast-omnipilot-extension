@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { getSelectedText, Detail } from "@raycast/api";
-import { CommandTemplate } from "./lib/commandTemplate";
-import { LLMValidation } from "./components/LLMValidation";
+import { useState, useEffect, useRef } from 'react';
+import { getSelectedText, Detail } from '@raycast/api';
+import { CommandTemplate } from './lib/commandTemplate';
+import { LLMValidation } from './components/LLMValidation';
 
 interface Arguments {
   TranslateLanguage: string;
@@ -9,7 +9,7 @@ interface Arguments {
 
 export default function TranslateText(props: { arguments: Arguments }) {
   const hasExecutedRef = useRef(false);
-  const [selectedText, setSelectedText] = useState<string>("");
+  const [selectedText, setSelectedText] = useState<string>('');
   const [isLoadingText, setIsLoadingText] = useState(true);
 
   const { TranslateLanguage } = props.arguments;
@@ -26,8 +26,8 @@ export default function TranslateText(props: { arguments: Arguments }) {
         setSelectedText(text);
         hasExecutedRef.current = true;
       } catch (error) {
-        console.error("Error getting selected text:", error);
-        setSelectedText("");
+        console.error('Error getting selected text:', error);
+        setSelectedText('');
         hasExecutedRef.current = true;
       } finally {
         setIsLoadingText(false);
@@ -42,7 +42,9 @@ export default function TranslateText(props: { arguments: Arguments }) {
   }
 
   if (!selectedText.trim()) {
-    return <Detail markdown="❌ **No text selected**. Please select some text to translate and try again." />;
+    return (
+      <Detail markdown="❌ **No text selected**. Please select some text to translate and try again." />
+    );
   }
 
   // Build the translation prompt
@@ -53,7 +55,10 @@ export default function TranslateText(props: { arguments: Arguments }) {
   // return <></>;
   return (
     <LLMValidation>
-      <CommandTemplate userQuery={selectedText} customPrompt={translationPrompt} />
+      <CommandTemplate
+        userQuery={selectedText}
+        customPrompt={translationPrompt}
+      />
     </LLMValidation>
   );
 }

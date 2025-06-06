@@ -1,7 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { getSelectedText, Detail, Clipboard, open, showHUD, showToast, Toast } from "@raycast/api";
-import { useAIStreaming } from "./hooks/useAIStreaming";
-import { LLMValidation } from "./components/LLMValidation";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  getSelectedText,
+  Detail,
+  Clipboard,
+  open,
+  showHUD,
+  showToast,
+  Toast,
+} from '@raycast/api';
+import { useAIStreaming } from './hooks/useAIStreaming';
+import { LLMValidation } from './components/LLMValidation';
 
 interface CalendarEvent {
   title: string;
@@ -15,9 +23,11 @@ interface CalendarEvent {
 
 export default function CreateCalendarEvent() {
   const hasExecutedRef = useRef(false);
-  const [selectedText, setSelectedText] = useState<string | null>("");
+  const [selectedText, setSelectedText] = useState<string | null>('');
   const [isLoadingText, setIsLoadingText] = useState(true);
-  const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(null);
+  const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(
+    null,
+  );
   const [isProcessingEvent, setIsProcessingEvent] = useState(false);
 
   const { response, isLoading, error, askAI } = useAIStreaming();
@@ -25,8 +35,8 @@ export default function CreateCalendarEvent() {
   // Get current date and time information for the AI prompt
   const getCurrentDateTimeInfo = useCallback(() => {
     const now = new Date();
-    const date_str = now.toISOString().split("T")[0];
-    const time_str = now.toISOString().split("T")[1].split(".")[0];
+    const date_str = now.toISOString().split('T')[0];
+    const time_str = now.toISOString().split('T')[1].split('.')[0];
     const week_day = now.getDay().toString();
 
     return { date_str, time_str, week_day };
@@ -39,7 +49,7 @@ export default function CreateCalendarEvent() {
         const selected = await getSelectedText();
         setSelectedText(selected);
       } catch (error) {
-        console.log("No text selected:", error);
+        console.log('No text selected:', error);
         setSelectedText(null);
       } finally {
         setIsLoadingText(false);
@@ -93,14 +103,14 @@ Note:
           // Create calendar URL and handle clipboard/browser
           createCalendarEvent(parsedEvent);
         } else {
-          throw new Error("No valid JSON found in AI response");
+          throw new Error('No valid JSON found in AI response');
         }
       } catch (parseError) {
-        console.error("Error parsing calendar event:", parseError);
+        console.error('Error parsing calendar event:', parseError);
         showToast({
           style: Toast.Style.Failure,
-          title: "Failed to extract event",
-          message: "Could not parse calendar event from AI response",
+          title: 'Failed to extract event',
+          message: 'Could not parse calendar event from AI response',
         });
       } finally {
         setIsProcessingEvent(false);
@@ -113,65 +123,70 @@ Note:
     try {
       const url = generateGoogleCalendarURL(event);
 
-      await showHUD("Calendar event extracted! Copied to clipboard and opened in browser.");
+      await showHUD(
+        'Calendar event extracted! Copied to clipboard and opened in browser.',
+      );
       await Clipboard.copy(url);
       await open(url);
     } catch (error) {
-      console.error("Error creating calendar event:", error);
+      console.error('Error creating calendar event:', error);
       showToast({
         style: Toast.Style.Failure,
-        title: "Failed to create calendar event",
+        title: 'Failed to create calendar event',
         message: String(error),
       });
     }
   }, []);
 
   // Generate Google Calendar URL
-  const generateGoogleCalendarURL = useCallback((event: CalendarEvent): string => {
-    // Clean up and format dates/times - remove any non-numeric characters
-    const startDateTime = `${event.start_date.replace(/-/g, "")}T${event.start_time.replace(/:/g, "")}00`;
-    const endDateTime = `${event.end_date.replace(/-/g, "")}T${event.end_time.replace(/:/g, "")}00`;
+  const generateGoogleCalendarURL = useCallback(
+    (event: CalendarEvent): string => {
+      // Clean up and format dates/times - remove any non-numeric characters
+      const startDateTime = `${event.start_date.replace(/-/g, '')}T${event.start_time.replace(/:/g, '')}00`;
+      const endDateTime = `${event.end_date.replace(/-/g, '')}T${event.end_time.replace(/:/g, '')}00`;
 
-    // Encode parameters for URL safety
-    const params = {
-      text: encodeURIComponent(event.title),
-      dates: `${startDateTime}/${endDateTime}`,
-      details: encodeURIComponent(event.details),
-      location: encodeURIComponent(event.location),
-    };
+      // Encode parameters for URL safety
+      const params = {
+        text: encodeURIComponent(event.title),
+        dates: `${startDateTime}/${endDateTime}`,
+        details: encodeURIComponent(event.details),
+        location: encodeURIComponent(event.location),
+      };
 
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${params.text}&dates=${params.dates}&details=${params.details}&location=${params.location}&trp=false`;
-  }, []);
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${params.text}&dates=${params.dates}&details=${params.details}&location=${params.location}&trp=false`;
+    },
+    [],
+  );
 
   // Helper function to format date from YYYYMMDD to readable format
   const formatDate = useCallback((dateStr: string): string => {
-    const cleanDate = dateStr.replace(/-/g, "");
+    const cleanDate = dateStr.replace(/-/g, '');
     const year = cleanDate.substring(0, 4);
     const month = cleanDate.substring(4, 6);
     const day = cleanDate.substring(6, 8);
-    
+
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   }, []);
 
   // Helper function to format time from HHMMSS to readable format
   const formatTime = useCallback((timeStr: string): string => {
-    const cleanTime = timeStr.replace(/:/g, "");
+    const cleanTime = timeStr.replace(/:/g, '');
     const hours = parseInt(cleanTime.substring(0, 2));
     const minutes = parseInt(cleanTime.substring(2, 4));
-    
+
     const date = new Date();
     date.setHours(hours, minutes, 0, 0);
-    
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
+
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: true 
+      hour12: true,
     });
   }, []);
 
@@ -181,7 +196,7 @@ Note:
     if (hasExecutedRef.current) {
       return;
     }
-    
+
     if (selectedText && !isLoading && !response) {
       const systemPrompt = createSystemPrompt();
       askAI(selectedText, systemPrompt);
@@ -225,7 +240,7 @@ Please select text containing event information and try again.
 
   if (isLoading) {
     markdownContent +=
-      "🤖 **Extracting event information...**\n\nPlease wait while I analyze the text and extract calendar event details.";
+      '🤖 **Extracting event information...**\n\nPlease wait while I analyze the text and extract calendar event details.';
   } else if (error) {
     markdownContent += `❌ **Error:**\n${error}`;
   } else if (calendarEvent) {
@@ -233,12 +248,12 @@ Please select text containing event information and try again.
     const formattedEndDate = formatDate(calendarEvent.end_date);
     const formattedStartTime = formatTime(calendarEvent.start_time);
     const formattedEndTime = formatTime(calendarEvent.end_time);
-    
+
     markdownContent += `✅ **Event Extracted Successfully!**
 
 **Event Details:**
 - **Title:** ${calendarEvent.title}
-- **Date:** ${formattedStartDate}${calendarEvent.start_date !== calendarEvent.end_date ? ` to ${formattedEndDate}` : ""}
+- **Date:** ${formattedStartDate}${calendarEvent.start_date !== calendarEvent.end_date ? ` to ${formattedEndDate}` : ''}
 - **Time:** ${formattedStartTime} - ${formattedEndTime}
 - **Location:** ${calendarEvent.location}
 - **Details:** ${calendarEvent.details}
