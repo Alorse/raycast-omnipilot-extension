@@ -46,7 +46,6 @@ export function ChatActions({
           title="Send Message"
           icon={Icon.Airplane}
           onAction={() => handleSendMessage(searchText)}
-          shortcut={{ modifiers: ['cmd'], key: 'enter' }}
         />
       )}
 
