@@ -87,6 +87,49 @@ Note:
 * Ensure dates are in YYYYMMDD format without separators`;
   }, [getCurrentDateTimeInfo]);
 
+  // Generate Google Calendar URL
+  const generateGoogleCalendarURL = useCallback(
+    (event: CalendarEvent): string => {
+      // Clean up and format dates/times - remove any non-numeric characters
+      const startDateTime = `${event.start_date.replace(/-/g, '')}T${event.start_time.replace(/:/g, '')}00`;
+      const endDateTime = `${event.end_date.replace(/-/g, '')}T${event.end_time.replace(/:/g, '')}00`;
+
+      // Encode parameters for URL safety
+      const params = {
+        text: encodeURIComponent(event.title),
+        dates: `${startDateTime}/${endDateTime}`,
+        details: encodeURIComponent(event.details),
+        location: encodeURIComponent(event.location),
+      };
+
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${params.text}&dates=${params.dates}&details=${params.details}&location=${params.location}&trp=false`;
+    },
+    [],
+  );
+
+  // Create Google Calendar URL and handle actions
+  const createCalendarEvent = useCallback(
+    async (event: CalendarEvent) => {
+      try {
+        const url = generateGoogleCalendarURL(event);
+
+        await showHUD(
+          'Calendar event extracted! Copied to clipboard and opened in browser.',
+        );
+        await Clipboard.copy(url);
+        await open(url);
+      } catch (error) {
+        console.error('Error creating calendar event:', error);
+        showToast({
+          style: Toast.Style.Failure,
+          title: 'Failed to create calendar event',
+          message: String(error),
+        });
+      }
+    },
+    [generateGoogleCalendarURL],
+  );
+
   // Process AI response and extract calendar event
   useEffect(() => {
     if (response && !isLoading && !isProcessingEvent) {
@@ -116,47 +159,13 @@ Note:
         setIsProcessingEvent(false);
       }
     }
-  }, [response, isLoading, isProcessingEvent]);
-
-  // Create Google Calendar URL and handle actions
-  const createCalendarEvent = useCallback(async (event: CalendarEvent) => {
-    try {
-      const url = generateGoogleCalendarURL(event);
-
-      await showHUD(
-        'Calendar event extracted! Copied to clipboard and opened in browser.',
-      );
-      await Clipboard.copy(url);
-      await open(url);
-    } catch (error) {
-      console.error('Error creating calendar event:', error);
-      showToast({
-        style: Toast.Style.Failure,
-        title: 'Failed to create calendar event',
-        message: String(error),
-      });
-    }
-  }, []);
-
-  // Generate Google Calendar URL
-  const generateGoogleCalendarURL = useCallback(
-    (event: CalendarEvent): string => {
-      // Clean up and format dates/times - remove any non-numeric characters
-      const startDateTime = `${event.start_date.replace(/-/g, '')}T${event.start_time.replace(/:/g, '')}00`;
-      const endDateTime = `${event.end_date.replace(/-/g, '')}T${event.end_time.replace(/:/g, '')}00`;
-
-      // Encode parameters for URL safety
-      const params = {
-        text: encodeURIComponent(event.title),
-        dates: `${startDateTime}/${endDateTime}`,
-        details: encodeURIComponent(event.details),
-        location: encodeURIComponent(event.location),
-      };
-
-      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${params.text}&dates=${params.dates}&details=${params.details}&location=${params.location}&trp=false`;
-    },
-    [],
-  );
+  }, [
+    response,
+    isLoading,
+    isProcessingEvent,
+    createCalendarEvent,
+    generateGoogleCalendarURL,
+  ]);
 
   // Helper function to format date from YYYYMMDD to readable format
   const formatDate = useCallback((dateStr: string): string => {
