@@ -29,12 +29,11 @@ export function LLMValidation({
   children,
   onValidationPassed,
 }: LLMValidationProps) {
-  const [validationState, setValidationState] =
-    useState<LLMValidationState>({
-      isValid: false,
-      isLoading: true,
-      statusMessage: 'Checking LLM configurations...',
-    });
+  const [validationState, setValidationState] = useState<LLMValidationState>({
+    isValid: false,
+    isLoading: true,
+    statusMessage: 'Checking LLM configurations...',
+  });
 
   const validateLLMConfigs = useCallback(async () => {
     try {

@@ -68,7 +68,7 @@ export function CommandTemplate({
       askAI(query, customPrompt, customModel);
       hasExecutedRef.current = true;
     }
-  }, []);
+  }, [askAI, query, customPrompt, customModel]);
 
   // Save to history when response is complete
   useEffect(() => {
