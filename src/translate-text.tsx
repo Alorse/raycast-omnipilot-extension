@@ -9,7 +9,7 @@ interface Arguments {
 
 export default function TranslateText(props: { arguments: Arguments }) {
   const hasExecutedRef = useRef(false);
-  const [selectedText, setSelectedText] = useState<string>('');
+  const [selectedText, setSelectedText] = useState<string | null>('');
   const [isLoadingText, setIsLoadingText] = useState(true);
 
   const { TranslateLanguage } = props.arguments;
@@ -17,6 +17,7 @@ export default function TranslateText(props: { arguments: Arguments }) {
   useEffect(() => {
     // Prevent double execution in React Strict Mode
     if (hasExecutedRef.current) {
+      setSelectedText(null);
       return;
     }
 
@@ -41,7 +42,7 @@ export default function TranslateText(props: { arguments: Arguments }) {
     return <Detail isLoading={true} markdown="Getting selected text..." />;
   }
 
-  if (!selectedText.trim()) {
+  if (!selectedText || !selectedText.trim()) {
     return (
       <Detail markdown="❌ **No text selected**. Please select some text to translate and try again." />
     );

@@ -1,28 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getSelectedText, Detail } from '@raycast/api';
 import { CommandTemplate } from './lib/commandTemplate';
 import { LLMValidation } from './components/LLMValidation';
 
 export default function ExplainText() {
+  const hasExecutedRef = useRef(false);
   const [selectedText, setSelectedText] = useState<string | null>('');
   const [isLoadingText, setIsLoadingText] = useState(true);
 
   useEffect(() => {
+    // Prevent double execution in React Strict Mode
+    if (hasExecutedRef.current) {
+      setSelectedText(null);
+      return;
+    }
+
     async function fetchSelectedText() {
       try {
         const selected = await getSelectedText();
         setSelectedText(selected);
       } catch (error) {
-        // getSelectedText() throws an error when no text is selected
-        console.error('No text selected:', error);
         setSelectedText(null);
       } finally {
         setIsLoadingText(false);
+        hasExecutedRef.current = true;
       }
     }
 
     fetchSelectedText();
-  }, []);
+  }, [hasExecutedRef.current]);
 
   if (isLoadingText) {
     return <Detail isLoading={true} markdown="Getting text to explain..." />;
