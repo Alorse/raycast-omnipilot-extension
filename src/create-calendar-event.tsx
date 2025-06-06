@@ -148,6 +148,38 @@ Note:
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${params.text}&dates=${params.dates}&details=${params.details}&location=${params.location}&trp=false`;
   }, []);
 
+  // Helper function to format date from YYYYMMDD to readable format
+  const formatDate = useCallback((dateStr: string): string => {
+    const cleanDate = dateStr.replace(/-/g, "");
+    const year = cleanDate.substring(0, 4);
+    const month = cleanDate.substring(4, 6);
+    const day = cleanDate.substring(6, 8);
+    
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }, []);
+
+  // Helper function to format time from HHMMSS to readable format
+  const formatTime = useCallback((timeStr: string): string => {
+    const cleanTime = timeStr.replace(/:/g, "");
+    const hours = parseInt(cleanTime.substring(0, 2));
+    const minutes = parseInt(cleanTime.substring(2, 4));
+    
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  }, []);
+
   // Start AI processing when text is available
   useEffect(() => {
     if (selectedText && !isLoading && !response) {
@@ -198,12 +230,17 @@ Please select text containing event information and try again.
   } else if (error) {
     markdownContent += `❌ **Error:**\n${error}`;
   } else if (calendarEvent) {
+    const formattedStartDate = formatDate(calendarEvent.start_date);
+    const formattedEndDate = formatDate(calendarEvent.end_date);
+    const formattedStartTime = formatTime(calendarEvent.start_time);
+    const formattedEndTime = formatTime(calendarEvent.end_time);
+    
     markdownContent += `✅ **Event Extracted Successfully!**
 
 **Event Details:**
 - **Title:** ${calendarEvent.title}
-- **Date:** ${calendarEvent.start_date} (${calendarEvent.start_date === calendarEvent.end_date ? "Same day" : `to ${calendarEvent.end_date}`})
-- **Time:** ${calendarEvent.start_time} - ${calendarEvent.end_time}
+- **Date:** ${formattedStartDate}${calendarEvent.start_date !== calendarEvent.end_date ? ` to ${formattedEndDate}` : ""}
+- **Time:** ${formattedStartTime} - ${formattedEndTime}
 - **Location:** ${calendarEvent.location}
 - **Details:** ${calendarEvent.details}
 
@@ -223,20 +260,6 @@ ${response}
       <Detail
         isLoading={isLoading || isProcessingEvent}
         markdown={markdownContent}
-        metadata={
-          calendarEvent ? (
-            <Detail.Metadata>
-              <Detail.Metadata.Label title="Title" text={calendarEvent.title} />
-              <Detail.Metadata.Label title="Start Date" text={calendarEvent.start_date} />
-              <Detail.Metadata.Label title="Start Time" text={calendarEvent.start_time} />
-              <Detail.Metadata.Label title="End Date" text={calendarEvent.end_date} />
-              <Detail.Metadata.Label title="End Time" text={calendarEvent.end_time} />
-              <Detail.Metadata.Label title="Location" text={calendarEvent.location} />
-              <Detail.Metadata.Separator />
-              <Detail.Metadata.Label title="Details" text={calendarEvent.details} />
-            </Detail.Metadata>
-          ) : undefined
-        }
       />
     </LLMValidation>
   );
