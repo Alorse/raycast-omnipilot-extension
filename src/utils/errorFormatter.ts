@@ -13,9 +13,9 @@ export function formatErrorMessage(errorMessage: string): string {
       `${baseMessage}🔍 **Model not found**\n\n` +
       `The specified model does not exist or is not available.\n\n` +
       `**Possible solutions:**\n` +
-      `• Check the model name in preferences\n` +
-      `• Consult available models from your provider\n` +
-      `• Use a common model like "gpt-3.5-turbo"\n\n` +
+      `- Check the model name in preferences\n` +
+      `- Consult available models from your provider\n` +
+      `- Use a common model like "gpt-3.5-turbo"\n\n` +
       `**Technical error:** ${errorMessage}`
     );
   }
@@ -29,9 +29,9 @@ export function formatErrorMessage(errorMessage: string): string {
       `${baseMessage}🔑 **Invalid API Key**\n\n` +
       `Your API key is invalid or has expired.\n\n` +
       `**Solutions:**\n` +
-      `• Verify your API key in extension preferences\n` +
-      `• Make sure the key hasn't expired\n` +
-      `• Generate a new API key if necessary\n\n` +
+      `- Verify your API key in extension preferences\n` +
+      `- Make sure the key hasn't expired\n` +
+      `- Generate a new API key if necessary\n\n` +
       `**Technical error:** ${errorMessage}`
     );
   }
@@ -41,9 +41,9 @@ export function formatErrorMessage(errorMessage: string): string {
       `${baseMessage}⏱️ **Rate limit exceeded**\n\n` +
       `You've made too many requests too quickly.\n\n` +
       `**Solutions:**\n` +
-      `• Wait a few minutes before trying again\n` +
-      `• Reduce the frequency of your queries\n` +
-      `• Consider upgrading your plan if needed\n\n` +
+      `- Wait a few minutes before trying again\n` +
+      `- Reduce the frequency of your queries\n` +
+      `- Consider upgrading your plan if needed\n\n` +
       `**Technical error:** ${errorMessage}`
     );
   }
@@ -57,9 +57,9 @@ export function formatErrorMessage(errorMessage: string): string {
       `${baseMessage}💳 **Insufficient funds**\n\n` +
       `You don't have enough credits or have exceeded your quota.\n\n` +
       `**Solutions:**\n` +
-      `• Top up your account in the provider dashboard\n` +
-      `• Check your spending limits\n` +
-      `• Consider switching to a more economical model\n\n` +
+      `- Top up your account in the provider dashboard\n` +
+      `- Check your spending limits\n` +
+      `- Consider switching to a more economical model\n\n` +
       `**Technical error:** ${errorMessage}`
     );
   }
@@ -69,9 +69,9 @@ export function formatErrorMessage(errorMessage: string): string {
       `${baseMessage}⏰ **Request timeout**\n\n` +
       `The request took too long to process.\n\n` +
       `**Solutions:**\n` +
-      `• Try again in a few moments\n` +
-      `• Reduce the complexity of your query\n` +
-      `• Check your internet connection\n\n` +
+      `- Try again in a few moments\n` +
+      `- Reduce the complexity of your query\n` +
+      `- Check your internet connection\n\n` +
       `**Technical error:** ${errorMessage}`
     );
   }
@@ -85,9 +85,9 @@ export function formatErrorMessage(errorMessage: string): string {
       `${baseMessage}🌐 **Connection error**\n\n` +
       `Could not establish connection to the AI service.\n\n` +
       `**Solutions:**\n` +
-      `• Check your internet connection\n` +
-      `• Try again in a few moments\n` +
-      `• Verify that the API URL is correct\n\n` +
+      `- Check your internet connection\n` +
+      `- Try again in a few moments\n` +
+      `- Verify that the API URL is correct\n\n` +
       `**Technical error:** ${errorMessage}`
     );
   }
@@ -97,9 +97,9 @@ export function formatErrorMessage(errorMessage: string): string {
     `${baseMessage}🚨 **Unknown error**\n\n` +
     `An unexpected error occurred.\n\n` +
     `**General solutions:**\n` +
-    `• Check your configuration in preferences\n` +
-    `• Try again in a few moments\n` +
-    `• Contact support if the problem persists\n\n` +
+    `- Check your configuration in preferences\n` +
+    `- Try again in a few moments\n` +
+    `- Contact support if the problem persists\n\n` +
     `**Technical error:** ${errorMessage}`
   );
 }
