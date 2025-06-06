@@ -168,7 +168,7 @@ export function useChat() {
         if (prev.currentConversation?.id === conversation?.id) {
           return prev; // No change needed, return same state
         }
-        
+
         return { ...prev, currentConversation: conversation };
       });
     },
@@ -181,16 +181,16 @@ export function useChat() {
       const updatedConversations = state.conversations.filter(
         (conv) => conv.id !== conversationId,
       );
-      
+
       setState((prev) => ({
         ...prev,
         conversations: updatedConversations,
         currentConversation:
-        prev.currentConversation?.id === conversationId
-        ? null
-        : prev.currentConversation,
+          prev.currentConversation?.id === conversationId
+            ? null
+            : prev.currentConversation,
       }));
-       await saveConversations(updatedConversations);
+      await saveConversations(updatedConversations);
 
       showToast({
         style: Toast.Style.Success,

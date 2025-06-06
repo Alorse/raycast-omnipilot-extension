@@ -282,10 +282,10 @@ export function useChatLogic() {
   const currentMessages = useMemo(() => {
     return currentConversation?.messages || [];
   }, [currentConversation?.messages]);
-  
+
   const allMessages = useMemo(() => {
     const messages = [...currentMessages];
-    
+
     // Add current streaming response as a temporary message
     if (isLoading && response) {
       messages.push({
@@ -295,7 +295,7 @@ export function useChatLogic() {
         timestamp: new Date().toISOString(),
       });
     }
-    
+
     return messages;
   }, [currentMessages, isLoading, response]);
 
