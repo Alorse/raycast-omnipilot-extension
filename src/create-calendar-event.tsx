@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getSelectedText, Detail, Clipboard, open, showHUD, showToast, Toast, getPreferenceValues } from "@raycast/api";
 import { useAIStreaming } from "./hooks/useAIStreaming";
 import { LLMValidation } from "./components/LLMValidation";
@@ -18,6 +18,7 @@ interface Preferences {
 }
 
 export default function CreateCalendarEvent() {
+  const hasExecutedRef = useRef(false);
   const [selectedText, setSelectedText] = useState<string | null>("");
   const [isLoadingText, setIsLoadingText] = useState(true);
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(null);
@@ -182,9 +183,16 @@ Note:
 
   // Start AI processing when text is available
   useEffect(() => {
+    // Prevent double execution in React Strict Mode
+    if (hasExecutedRef.current) {
+      return;
+    }
+    
     if (selectedText && !isLoading && !response) {
       const systemPrompt = createSystemPrompt();
+      console.log("Selected text:", selectedText);
       askAI(selectedText, systemPrompt);
+      hasExecutedRef.current = true;
     }
   }, [selectedText, askAI, createSystemPrompt, isLoading, response]);
 
