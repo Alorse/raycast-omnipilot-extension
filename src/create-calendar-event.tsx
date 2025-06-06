@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getSelectedText, Detail, Clipboard, open, showHUD, showToast, Toast, getPreferenceValues } from "@raycast/api";
+import { getSelectedText, Detail, Clipboard, open, showHUD, showToast, Toast } from "@raycast/api";
 import { useAIStreaming } from "./hooks/useAIStreaming";
 import { LLMValidation } from "./components/LLMValidation";
 
@@ -13,10 +13,6 @@ interface CalendarEvent {
   location: string;
 }
 
-interface Preferences {
-  defaultLanguage: string;
-}
-
 export default function CreateCalendarEvent() {
   const hasExecutedRef = useRef(false);
   const [selectedText, setSelectedText] = useState<string | null>("");
@@ -25,7 +21,6 @@ export default function CreateCalendarEvent() {
   const [isProcessingEvent, setIsProcessingEvent] = useState(false);
 
   const { response, isLoading, error, askAI } = useAIStreaming();
-  const preferences = getPreferenceValues<Preferences>();
 
   // Get current date and time information for the AI prompt
   const getCurrentDateTimeInfo = useCallback(() => {
@@ -57,7 +52,6 @@ export default function CreateCalendarEvent() {
   // Create system prompt for calendar event extraction
   const createSystemPrompt = useCallback(() => {
     const { date_str, time_str, week_day } = getCurrentDateTimeInfo();
-    const language = preferences.defaultLanguage || "English";
 
     return `Extract schedule information from the text provided by the user.
 The output should be in the following JSON format.
@@ -73,7 +67,7 @@ The output should be in the following JSON format.
 }
 
 Note:
-* Output in ${language}
+* Output using the same language as the original text.
 * Current date: ${date_str}, Current time: ${time_str}, Current week day: ${week_day}, try to set the event date and time based on the current date and time
 * Do not include any content other than JSON format in the output
 * If the organizer's name is known, include it in the title
@@ -81,7 +75,7 @@ Note:
 * If the duration is not specified, assume it is 2 hours
 * Use 24-hour format for times (hhmmss)
 * Ensure dates are in YYYYMMDD format without separators`;
-  }, [getCurrentDateTimeInfo, preferences.defaultLanguage]);
+  }, [getCurrentDateTimeInfo]);
 
   // Process AI response and extract calendar event
   useEffect(() => {
@@ -190,8 +184,8 @@ Note:
     
     if (selectedText && !isLoading && !response) {
       const systemPrompt = createSystemPrompt();
-      console.log("Selected text:", selectedText);
       askAI(selectedText, systemPrompt);
+      setSelectedText(null);
       hasExecutedRef.current = true;
     }
   }, [selectedText, askAI, createSystemPrompt, isLoading, response]);
@@ -224,9 +218,6 @@ Please select text containing event information and try again.
 
   // Build markdown content based on current state
   let markdownContent = `# 📅 Creating Calendar Event
-
-**Selected Text:**
-> ${selectedText}
 
 ---
 
