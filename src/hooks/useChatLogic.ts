@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { showToast, Toast, getPreferenceValues } from '@raycast/api';
 import { useChat } from './useChat';
 import { useAIStreaming } from './useAIStreaming';
@@ -113,6 +113,7 @@ export function useChatLogic() {
       console.error('Failed to manage conversations:', error);
     });
   }, [
+    conversations,
     isInitialized,
     conversations.length,
     currentConversation,
@@ -278,18 +279,25 @@ export function useChatLogic() {
   }, []);
 
   // Computed values
-  const currentMessages = currentConversation?.messages || [];
-  const allMessages = [...currentMessages];
-
-  // Add current streaming response as a temporary message
-  if (isLoading && response) {
-    allMessages.push({
-      id: 'streaming',
-      role: 'assistant' as const,
-      content: response,
-      timestamp: new Date().toISOString(),
-    });
-  }
+  const currentMessages = useMemo(() => {
+    return currentConversation?.messages || [];
+  }, [currentConversation?.messages]);
+  
+  const allMessages = useMemo(() => {
+    const messages = [...currentMessages];
+    
+    // Add current streaming response as a temporary message
+    if (isLoading && response) {
+      messages.push({
+        id: 'streaming',
+        role: 'assistant' as const,
+        content: response,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    
+    return messages;
+  }, [currentMessages, isLoading, response]);
 
   // Build chat content as markdown for better readability
   const buildChatMarkdown = useCallback(() => {
