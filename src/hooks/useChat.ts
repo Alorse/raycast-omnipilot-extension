@@ -99,7 +99,7 @@ export function useChat() {
   );
 
   // Add message to a specific conversation
-  const addMessageToConversation = useCallback(
+  const addMessage = useCallback(
     async (
       content: string,
       role: 'user' | 'assistant',
@@ -235,7 +235,7 @@ export function useChat() {
   return {
     ...state,
     createConversation,
-    addMessageToConversation,
+    addMessage,
     setCurrentConversation,
     deleteConversation,
     clearAllConversations,

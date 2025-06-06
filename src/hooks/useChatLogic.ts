@@ -133,7 +133,12 @@ export function useChatLogic() {
       if (response !== responseStartRef.current && response.trim()) {
         processingResponseRef.current = true;
 
-        addMessage(response, 'assistant', tokenUsage || undefined)
+        addMessage(
+          response,
+          'assistant',
+          currentConversation.id,
+          tokenUsage || undefined,
+        )
           .then(() => {
             clearResponse();
             responseStartRef.current = '';
@@ -164,7 +169,7 @@ export function useChatLogic() {
         setSearchText('');
 
         // Add user message
-        await addMessage(userMessage, 'user');
+        await addMessage(userMessage, 'user', currentConversation.id);
 
         // Get conversation context for AI and build complete message history
         const conversationHistory = getConversationContext(currentConversation);
