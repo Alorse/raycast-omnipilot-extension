@@ -1,4 +1,4 @@
-import React from 'react';
+import { ReactNode, useEffect, useState, useCallback } from 'react';
 import {
   Detail,
   Action,
@@ -11,7 +11,7 @@ import {
 import { getLLMStatus, getLLMStatusDescription } from '../utils/llmStatus';
 
 interface LLMValidationProps {
-  children: React.ReactNode;
+  children: ReactNode;
   onValidationPassed?: () => void;
 }
 
@@ -30,17 +30,13 @@ export function LLMValidation({
   onValidationPassed,
 }: LLMValidationProps) {
   const [validationState, setValidationState] =
-    React.useState<LLMValidationState>({
+    useState<LLMValidationState>({
       isValid: false,
       isLoading: true,
       statusMessage: 'Checking LLM configurations...',
     });
 
-  React.useEffect(() => {
-    validateLLMConfigs();
-  }, []);
-
-  const validateLLMConfigs = async () => {
+  const validateLLMConfigs = useCallback(async () => {
     try {
       setValidationState({
         isValid: false,
@@ -79,7 +75,11 @@ export function LLMValidation({
         statusMessage: 'Failed to check LLM configurations. Please try again.',
       });
     }
-  };
+  }, [onValidationPassed]);
+
+  useEffect(() => {
+    validateLLMConfigs();
+  }, [validateLLMConfigs]);
 
   // Show children (the actual AI command) if validation passed
   if (validationState.isValid) {
