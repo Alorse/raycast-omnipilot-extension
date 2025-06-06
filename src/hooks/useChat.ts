@@ -98,15 +98,22 @@ export function useChat() {
     [state.conversations, saveConversations],
   );
 
-  // Add message to current conversation
-  const addMessage = useCallback(
+  // Add message to a specific conversation
+  const addMessageToConversation = useCallback(
     async (
       content: string,
       role: 'user' | 'assistant',
+      targetConversationId: string,
       tokenUsage?: TokenUsage,
     ): Promise<void> => {
-      if (!state.currentConversation) {
-        throw new Error('No active conversation');
+      const targetConversation = state.conversations.find(
+        (conv) => conv.id === targetConversationId,
+      );
+
+      if (!targetConversation) {
+        throw new Error(
+          `Conversation with ID ${targetConversationId} not found`,
+        );
       }
 
       const newMessage: ChatMessage = {
@@ -118,12 +125,11 @@ export function useChat() {
       };
 
       const updatedConversation = {
-        ...state.currentConversation,
-        messages: [...state.currentConversation.messages, newMessage],
+        ...targetConversation,
+        messages: [...targetConversation.messages, newMessage],
         updatedAt: new Date().toISOString(),
         totalTokens:
-          state.currentConversation.totalTokens +
-          (tokenUsage?.total_tokens || 0),
+          targetConversation.totalTokens + (tokenUsage?.total_tokens || 0),
       };
 
       // Update title if it's the first user message and title is still "New Chat"
@@ -142,13 +148,16 @@ export function useChat() {
 
       setState((prev) => ({
         ...prev,
-        currentConversation: updatedConversation,
+        currentConversation:
+          prev.currentConversation?.id === targetConversationId
+            ? updatedConversation
+            : prev.currentConversation,
         conversations: updatedConversations,
       }));
 
       await saveConversations(updatedConversations);
     },
-    [state.currentConversation, state.conversations, saveConversations],
+    [state.conversations, saveConversations],
   );
 
   // Set current conversation
@@ -220,7 +229,7 @@ export function useChat() {
   return {
     ...state,
     createConversation,
-    addMessage,
+    addMessageToConversation,
     setCurrentConversation,
     deleteConversation,
     clearAllConversations,
