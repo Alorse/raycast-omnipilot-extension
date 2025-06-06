@@ -28,8 +28,8 @@ const PROVIDERS: ProviderInfo[] = [
     id: 'anthropic',
     name: 'Anthropic',
     displayName: 'Anthropic',
-    color: '#F1F0E8',
-    icon: 'anthropic.svg',
+    color: '#D97757',
+    icon: 'claude.svg',
     hostnames: ['api.anthropic.com', 'anthropic.com'],
   },
   {
