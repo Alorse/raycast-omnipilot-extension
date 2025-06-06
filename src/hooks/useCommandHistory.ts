@@ -123,7 +123,7 @@ export function useCommandHistory(): UseCommandHistoryResult {
           });
 
           if (isDuplicate) {
-            console.log('Skipping duplicate entry');
+            console.warn('Skipping duplicate entry');
             return currentHistory;
           }
 

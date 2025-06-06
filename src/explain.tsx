@@ -14,7 +14,7 @@ export default function ExplainText() {
         setSelectedText(selected);
       } catch (error) {
         // getSelectedText() throws an error when no text is selected
-        console.log('No text selected:', error);
+        console.error('No text selected:', error);
         setSelectedText(null);
       } finally {
         setIsLoadingText(false);

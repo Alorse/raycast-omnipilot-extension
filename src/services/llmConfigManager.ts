@@ -148,8 +148,6 @@ export class LLMConfigManager {
     const existing = await this.getAllConfigs();
 
     if (existing.length === 0) {
-      console.log('Initializing default LLM configurations...');
-
       // Create empty configs that users can fill in
       const defaultConfigs: LLMConfig[] = DEFAULT_LLMS.map(
         (template, index) => ({

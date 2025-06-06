@@ -9,7 +9,6 @@ export function useInitialization() {
     const initialize = async () => {
       try {
         await initializeLLMConfigs();
-        console.log('LLM configurations initialized successfully');
       } catch (error) {
         console.error('Failed to initialize LLM configurations:', error);
       }

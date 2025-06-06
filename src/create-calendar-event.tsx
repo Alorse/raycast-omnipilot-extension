@@ -49,7 +49,7 @@ export default function CreateCalendarEvent() {
         const selected = await getSelectedText();
         setSelectedText(selected);
       } catch (error) {
-        console.log('No text selected:', error);
+        console.error('No text selected:', error);
         setSelectedText(null);
       } finally {
         setIsLoadingText(false);
