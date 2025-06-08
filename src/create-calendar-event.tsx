@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  getSelectedText,
   Detail,
   Clipboard,
   open,
@@ -9,6 +8,7 @@ import {
   Toast,
 } from '@raycast/api';
 import { useAIStreaming } from './hooks/useAIStreaming';
+import { useSelectedText } from './hooks/useSelectedText';
 import { LLMValidation } from './components/LLMValidation';
 import { NoTextSelected } from './components/NoTextSelected';
 
@@ -23,9 +23,7 @@ interface CalendarEvent {
 }
 
 export default function CreateCalendarEvent() {
-  const hasExecutedRef = useRef(false);
-  const selectedTextRef = useRef<string | null>(null);
-  const [isLoadingText, setIsLoadingText] = useState(true);
+  const { selectedText, isLoadingText } = useSelectedText();
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(
     null,
   );
@@ -41,23 +39,6 @@ export default function CreateCalendarEvent() {
     const week_day = now.getDay().toString();
 
     return { date_str, time_str, week_day };
-  }, []);
-
-  // Fetch selected text on component mount
-  useEffect(() => {
-    async function fetchSelectedText() {
-      try {
-        const selected = await getSelectedText();
-        selectedTextRef.current = selected;
-      } catch (error) {
-        console.error('No text selected:', error);
-        selectedTextRef.current = null;
-      } finally {
-        setIsLoadingText(false);
-      }
-    }
-
-    fetchSelectedText();
   }, []);
 
   // Create system prompt for calendar event extraction
@@ -202,18 +183,11 @@ Note:
 
   // Start AI processing when text is available
   useEffect(() => {
-    // Prevent double execution in React Strict Mode
-    if (hasExecutedRef.current) {
-      return;
-    }
-
-    if (selectedTextRef.current && !isLoadingText && !isLoading && !response) {
+    if (selectedText && !isLoadingText && !isLoading && !response) {
       const systemPrompt = createSystemPrompt();
-      askAI(selectedTextRef.current, systemPrompt);
-      selectedTextRef.current = null;
-      hasExecutedRef.current = true;
+      askAI(selectedText, systemPrompt);
     }
-  }, [isLoadingText, askAI, createSystemPrompt, isLoading, response]);
+  }, [selectedText, isLoadingText, askAI, createSystemPrompt, isLoading, response]);
 
   // Loading state while getting selected text
   if (isLoadingText) {
@@ -221,22 +195,8 @@ Note:
   }
 
   // No text selected
-  if (!selectedTextRef.current) {
-    const customMessage = `❌ **No text selected**
-
-Please select text containing event information and try again.
-
-**How to use:**
-- Select text containing event details (date, time, location, etc.)
-- Run this command
-- The event will be extracted and opened in Google Calendar
-
-**Example text formats:**
-- "Meeting with John tomorrow at 2pm in the conference room"
-- "Dentist appointment on Friday December 15th at 10:30am"
-- "Team presentation next Monday from 9am to 11am at office"`;
-
-    return <NoTextSelected customMessage={customMessage} />;
+  if (!selectedText || !selectedText.trim()) {
+    return <NoTextSelected commandName="the create calendar event command" />;
   }
 
   // Build markdown content based on current state
