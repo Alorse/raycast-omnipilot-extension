@@ -13,7 +13,6 @@ interface ChatActionsProps {
   handleDeleteConversation: (conversationId: string) => Promise<void>;
 
   // Optional props for conditional rendering
-  showSendMessage?: boolean;
   conversationId?: string;
 
   showConversationSwitch?: boolean;
@@ -27,7 +26,6 @@ export function ChatActions({
   handleSendMessage,
   handleCreateConversation,
   handleDeleteConversation,
-  showSendMessage = true,
   conversationId,
   showConversationSwitch = false,
   handleConversationChange,
@@ -40,8 +38,8 @@ export function ChatActions({
 
   return (
     <ActionPanel>
-      {/* Send Message Action - prioritize searchText input */}
-      {showSendMessage && searchText && searchText.trim() && (
+      {/* Send Message Action - prioritize searchText input regardless of showSendMessage */}
+      {searchText && searchText.trim() && (
         <Action
           title="Send Message"
           icon={Icon.Airplane}
@@ -68,11 +66,11 @@ export function ChatActions({
           </ActionPanel.Section>
         )}
 
-      {/* New Chat Action */}
+      {/* New Chat Action - disabled */}
       <Action
         title="New Chat"
         icon={Icon.Plus}
-        onAction={handleCreateConversation}
+        onAction={() => {}}
         shortcut={{ modifiers: ['cmd'], key: 'n' }}
       />
 

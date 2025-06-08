@@ -52,8 +52,7 @@ export function useChatLogic() {
     useAIStreaming();
   const [isInitialized, setIsInitialized] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [selectedConversationId, setSelectedConversationId] =
-    useState<string>('');
+  const selectedConversationIdRef = useRef<string>('');
   const [currentConfig, setCurrentConfig] = useState<{
     model: string;
     provider: string;
@@ -62,6 +61,13 @@ export function useChatLogic() {
 
   const responseStartRef = useRef<string>('');
   const processingResponseRef = useRef(false);
+  const isSendingMessageRef = useRef(false); // New flag to track message sending
+  const recentlyProcessedResponseRef = useRef(false); // Flag to prevent UI changes after AI response
+  
+  // State versions of flags for UI reactivity
+  const [isProcessingResponse, setIsProcessingResponse] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [recentlyProcessedResponse, setRecentlyProcessedResponse] = useState(false);
 
   // Single initialization effect
   useEffect(() => {
@@ -93,20 +99,84 @@ export function useChatLogic() {
 
   // Handle conversation management after initialization
   useEffect(() => {
-    if (!isInitialized) return;
+    console.warn('🔍 [CONVERSATION MANAGEMENT] useEffect triggered');
+    console.warn(
+      '🔍 [CONVERSATION MANAGEMENT] Dependencies - isInitialized:',
+      isInitialized,
+      'isLoading:',
+      isLoading,
+      'conversations.length:',
+      conversations.length,
+    );
+    console.warn(
+      '🔍 [CONVERSATION MANAGEMENT] Current conversation:',
+      currentConversation?.id,
+    );
+    console.warn(
+      '🔍 [CONVERSATION MANAGEMENT] Flags - processingResponse:',
+      processingResponseRef.current,
+      'sendingMessage:',
+      isSendingMessageRef.current,
+    );
+
+    if (!isInitialized) {
+      console.warn(
+        '🔍 [CONVERSATION MANAGEMENT] Early return - not initialized',
+      );
+      return;
+    }
+
+    // Prevent conversation management interference when AI is loading, processing response, or sending message
+    if (
+      isLoading ||
+      processingResponseRef.current ||
+      isSendingMessageRef.current ||
+      recentlyProcessedResponseRef.current
+    ) {
+      console.warn(
+        '🔧 [CONVERSATION MANAGEMENT] Skipping - AI is loading, processing response, sending message, or recently processed response',
+      );
+      return;
+    }
 
     const manageConversations = async () => {
+      console.warn('🔧 [CONVERSATION MANAGEMENT] Managing conversations');
+      console.warn(
+        '🔧 [CONVERSATION MANAGEMENT] Conversations length:',
+        conversations.length,
+      );
+      console.warn(
+        '🔧 [CONVERSATION MANAGEMENT] Current conversation:',
+        currentConversation?.id,
+      );
+      console.warn(
+        '🔧 [CONVERSATION MANAGEMENT] Selected conversation ref:',
+        selectedConversationIdRef.current,
+      );
+
       if (conversations.length === 0) {
         // Create initial conversation if none exists
+        console.warn(
+          '🔧 [CONVERSATION MANAGEMENT] Creating initial conversation',
+        );
         await createConversation();
       } else if (!currentConversation) {
         // Set the first conversation as current if none is selected
+        console.warn(
+          '🔧 [CONVERSATION MANAGEMENT] Setting first conversation as current:',
+          conversations[0].id,
+        );
         setCurrentConversation(conversations[0]);
-        setSelectedConversationId(conversations[0].id);
+        selectedConversationIdRef.current = conversations[0].id;
       } else {
         // Update selectedConversationId if currentConversation changes
-        setSelectedConversationId(currentConversation.id);
+        console.warn(
+          '🔧 [CONVERSATION MANAGEMENT] Updating selectedConversationIdRef to:',
+          currentConversation.id,
+        );
+        selectedConversationIdRef.current = currentConversation.id;
       }
+      console.warn('---\n\n');
     };
 
     manageConversations().catch((error) => {
@@ -119,7 +189,22 @@ export function useChatLogic() {
     currentConversation,
     createConversation,
     setCurrentConversation,
+    isLoading, // Keep isLoading as dependency but protect with flag
   ]);
+
+  // Sync UI state with currentConversation changes
+  useEffect(() => {
+    if (
+      currentConversation &&
+      currentConversation.id !== selectedConversationIdRef.current
+    ) {
+      console.warn(
+        '🔄 [UI SYNC] Syncing UI state with currentConversation:',
+        currentConversation.id,
+      );
+      selectedConversationIdRef.current = currentConversation.id;
+    }
+  }, [currentConversation]);
 
   // Handle AI response processing
   useEffect(() => {
@@ -131,7 +216,27 @@ export function useChatLogic() {
     ) {
       // Only process if response has changed from what we started with
       if (response !== responseStartRef.current && response.trim()) {
+        console.warn('✅ [AI RESPONSE] Processing AI response');
+        console.warn(
+          '📍 [AI RESPONSE] Current conversation ID:',
+          currentConversation.id,
+        );
+        console.warn(
+          '📍 [AI RESPONSE] Selected conversation ID (ref):',
+          selectedConversationIdRef.current,
+        );
+        console.warn('📊 [AI RESPONSE] Current conversation data:', {
+          id: currentConversation.id,
+          title: currentConversation.title,
+          messageCount: currentConversation.messages.length,
+        });
+        console.warn(
+          '💾 [AI RESPONSE] Will save response to conversation ID:',
+          currentConversation.id,
+        );
+
         processingResponseRef.current = true;
+        setIsProcessingResponse(true);
 
         addMessage(
           response,
@@ -140,14 +245,61 @@ export function useChatLogic() {
           tokenUsage || undefined,
         )
           .then(() => {
+            console.warn(
+              '✅ [AI RESPONSE] Successfully saved response to conversation:',
+              currentConversation.id,
+            );
+            console.warn(
+              '🔒 [AI RESPONSE] About to clear processingResponseRef and responseStartRef',
+            );
+            console.warn(
+              '🔒 [AI RESPONSE] Current flags before clearing - isLoading:',
+              isLoading,
+              'processingResponse:',
+              processingResponseRef.current,
+              'sendingMessage:',
+              isSendingMessageRef.current,
+            );
+
             clearResponse();
             responseStartRef.current = '';
             processingResponseRef.current = false;
+            setIsProcessingResponse(false);
+
+            console.warn(
+              '🔓 [AI RESPONSE] Cleared all flags - isLoading:',
+              isLoading,
+              'processingResponse:',
+              processingResponseRef.current,
+              'sendingMessage:',
+              isSendingMessageRef.current,
+            );
+            console.warn(
+              '🔓 [AI RESPONSE] Current conversation after clearing:',
+              currentConversation.id,
+            );
+            console.warn(
+              '🔓 [AI RESPONSE] Selected conversation ref after clearing:',
+              selectedConversationIdRef.current,
+            );
+
+            // Set flag to prevent UI changes for a brief period
+            recentlyProcessedResponseRef.current = true;
+            setRecentlyProcessedResponse(true);
+            setTimeout(() => {
+              recentlyProcessedResponseRef.current = false;
+              setRecentlyProcessedResponse(false);
+              console.warn(
+                '🔓 [AI RESPONSE] Cleared recentlyProcessedResponse flag',
+              );
+            }, 1000); // 1 second protection window
           })
           .catch((error) => {
             console.error('Failed to add AI response:', error);
             processingResponseRef.current = false;
+            setIsProcessingResponse(false);
           });
+        console.warn('---\n\n');
       }
     }
   }, [
@@ -167,6 +319,25 @@ export function useChatLogic() {
       try {
         // Clear the search text immediately
         setSearchText('');
+
+        // Set flag to prevent conversation management interference
+        isSendingMessageRef.current = true;
+        setIsSendingMessage(true);
+
+        console.warn('🚀 [SEND MESSAGE] Starting send message process');
+        console.warn(
+          '📍 [SEND MESSAGE] Current conversation ID:',
+          currentConversation.id,
+        );
+        console.warn(
+          '📍 [SEND MESSAGE] Selected conversation ID (ref):',
+          selectedConversationIdRef.current,
+        );
+        console.warn('📊 [SEND MESSAGE] Current conversation data:', {
+          id: currentConversation.id,
+          title: currentConversation.title,
+          messageCount: currentConversation.messages.length,
+        });
 
         // Add user message
         await addMessage(userMessage, 'user', currentConversation.id);
@@ -193,8 +364,25 @@ export function useChatLogic() {
         responseStartRef.current = response;
         processingResponseRef.current = false;
 
+        console.warn(
+          '🔄 [SEND MESSAGE] About to call AI with conversation ID:',
+          currentConversation.id,
+        );
+        console.warn(
+          '🔄 [SEND MESSAGE] Selected conversation ID (ref) before AI call:',
+          selectedConversationIdRef.current,
+        );
+        console.warn('---\n\n');
+
         await chatWithHistory(messages);
+
+        // Clear flag after AI call starts
+        isSendingMessageRef.current = false;
+        setIsSendingMessage(false);
       } catch (error) {
+        // Clear flag on error
+        isSendingMessageRef.current = false;
+        setIsSendingMessage(false);
         console.error('Failed to send message:', error);
         showToast({
           style: Toast.Style.Failure,
@@ -216,15 +404,60 @@ export function useChatLogic() {
 
   const handleConversationChange = useCallback(
     (conversationId: string) => {
+      console.warn(
+        '🔄 [CONVERSATION CHANGE] Changing conversation to:',
+        conversationId,
+      );
+      console.warn(
+        '🔄 [CONVERSATION CHANGE] Previous conversation ID:',
+        selectedConversationIdRef.current,
+      );
+      console.warn(
+        '🔄 [CONVERSATION CHANGE] Previous currentConversation ID:',
+        currentConversation?.id,
+      );
+
+      // Prevent conversation changes during AI processing
+      if (
+        isLoading ||
+        processingResponseRef.current ||
+        isSendingMessageRef.current ||
+        recentlyProcessedResponseRef.current
+      ) {
+        console.warn(
+          '🚫 [CONVERSATION CHANGE] BLOCKED - AI is loading, processing response, sending message, or recently processed response',
+        );
+        console.warn(
+          '🚫 [CONVERSATION CHANGE] Current flags - isLoading:',
+          isLoading,
+          'processingResponse:',
+          processingResponseRef.current,
+          'sendingMessage:',
+          isSendingMessageRef.current,
+          'recentlyProcessed:',
+          recentlyProcessedResponseRef.current,
+        );
+        return;
+      }
+
       const conversation = conversations.find((c) => c.id === conversationId);
       if (conversation) {
         setCurrentConversation(conversation);
-        setSelectedConversationId(conversationId);
+        selectedConversationIdRef.current = conversationId;
+
+        console.warn(
+          '✅ [CONVERSATION CHANGE] Successfully changed to:',
+          conversationId,
+        );
+        console.warn(
+          '✅ [CONVERSATION CHANGE] Updated selectedConversationIdRef to:',
+          selectedConversationIdRef.current,
+        );
       } else {
         console.error('Conversation not found with ID:', conversationId);
       }
     },
-    [conversations, setCurrentConversation],
+    [conversations, setCurrentConversation, currentConversation?.id, isLoading],
   );
 
   const handleDeleteConversation = useCallback(
@@ -251,7 +484,7 @@ export function useChatLogic() {
           );
           if (remainingConversations.length > 0) {
             setCurrentConversation(remainingConversations[0]);
-            setSelectedConversationId(remainingConversations[0].id);
+            selectedConversationIdRef.current = remainingConversations[0].id;
           } else {
             // Create a new conversation if none remain
             await createConversation();
@@ -336,7 +569,7 @@ ${message.content}
     // State
     isInitialized,
     searchText,
-    selectedConversationId,
+    selectedConversationId: currentConversation?.id || '', // Use currentConversation ID directly
     currentConfig,
 
     // Computed
@@ -358,5 +591,10 @@ ${message.content}
     response,
     isLoading,
     tokenUsage,
+
+    // Blocking flags for UI protection
+    isProcessingResponse,
+    isSendingMessage,
+    recentlyProcessedResponse,
   };
 }

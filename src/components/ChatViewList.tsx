@@ -1,3 +1,4 @@
+import React from 'react';
 import { List, Icon } from '@raycast/api';
 import { useChatLogic } from '../hooks/useChatLogic';
 import { ChatActions, ChatEmptyActions } from './ChatActions';
@@ -16,8 +17,25 @@ export function ChatViewList() {
     conversations,
     currentConversation,
     isLoading,
+    // Blocking flags
+    isProcessingResponse,
+    isSendingMessage,
+    recentlyProcessedResponse,
   } = useChatLogic();
 
+  // Keep a stable selected ID during AI processing to prevent Raycast from auto-switching
+  const stableSelectedId = React.useMemo(() => {
+    const shouldBlock = isLoading || isProcessingResponse || isSendingMessage || recentlyProcessedResponse;
+    
+    if (shouldBlock && selectedConversationId) {
+      // During AI processing, keep the current selection stable
+      return selectedConversationId;
+    }
+    
+    return selectedConversationId;
+  }, [selectedConversationId, isLoading, isProcessingResponse, isSendingMessage, recentlyProcessedResponse]);
+
+  // Early return AFTER all hooks
   if (!isInitialized) {
     return (
       <List isLoading={true} searchBarPlaceholder="Initializing chat..." />
@@ -31,10 +49,41 @@ export function ChatViewList() {
       onSearchTextChange={setSearchText}
       searchBarPlaceholder="Type your message and press Enter to send..."
       isShowingDetail={true}
-      selectedItemId={selectedConversationId}
+      selectedItemId={stableSelectedId}
       onSelectionChange={(id) => {
+        const timestamp = new Date().toLocaleTimeString();
+        console.warn(
+          `👆 [UI SELECTION CHANGE] ${timestamp} - List selection changed to:`,
+          id,
+        );
+        console.warn(
+          `👆 [UI SELECTION CHANGE] ${timestamp} - Current selectedConversationId:`,
+          selectedConversationId,
+        );
+
+        // Check if we should block ALL UI changes (including automatic ones from Raycast)
+        const shouldBlock = isLoading || isProcessingResponse || isSendingMessage || recentlyProcessedResponse;
+        
+        if (shouldBlock) {
+          console.warn(
+            `🚫 [UI SELECTION CHANGE] ${timestamp} - BLOCKED at UI level - flags:`,
+            { isLoading, isProcessingResponse, isSendingMessage, recentlyProcessedResponse }
+          );
+          // Don't call handleConversationChange at all - completely ignore this selection change
+          return; 
+        }
+
+        // Only allow changes that are different from current selection
         if (id && id !== selectedConversationId) {
+          console.warn(
+            `👆 [UI SELECTION CHANGE] ${timestamp} - Will call handleConversationChange for:`,
+            id,
+          );
           handleConversationChange(id);
+        } else {
+          console.warn(
+            `👆 [UI SELECTION CHANGE] ${timestamp} - No change needed or blocked`,
+          );
         }
       }}
     >
@@ -65,7 +114,6 @@ export function ChatViewList() {
                 handleSendMessage={handleSendMessage}
                 handleCreateConversation={handleCreateConversation}
                 handleDeleteConversation={handleDeleteConversation}
-                showSendMessage={conversation.id === currentConversation?.id}
                 conversationId={conversation.id}
               />
             }
