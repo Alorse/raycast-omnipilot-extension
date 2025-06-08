@@ -187,7 +187,14 @@ Note:
       const systemPrompt = createSystemPrompt();
       askAI(selectedText, systemPrompt);
     }
-  }, [selectedText, isLoadingText, askAI, createSystemPrompt, isLoading, response]);
+  }, [
+    selectedText,
+    isLoadingText,
+    askAI,
+    createSystemPrompt,
+    isLoading,
+    response,
+  ]);
 
   // Loading state while getting selected text
   if (isLoadingText) {

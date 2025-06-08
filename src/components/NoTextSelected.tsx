@@ -5,7 +5,10 @@ interface NoTextSelectedProps {
   customMessage?: string;
 }
 
-export function NoTextSelected({ commandName = "this command", customMessage }: NoTextSelectedProps) {
+export function NoTextSelected({
+  commandName = 'this command',
+  customMessage,
+}: NoTextSelectedProps) {
   const defaultMessage = `❌ **No text selected**
 
 Please select some text and try again.
@@ -21,9 +24,5 @@ Please select some text and try again.
 - Text that needs translation
 - Event information for calendar creation`;
 
-  return (
-    <Detail 
-      markdown={customMessage || defaultMessage} 
-    />
-  );
+  return <Detail markdown={customMessage || defaultMessage} />;
 }
