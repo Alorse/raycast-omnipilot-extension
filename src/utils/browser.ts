@@ -101,5 +101,28 @@ function replace(prompt: string, entries: [string, string][]): string {
       result = result.replaceAll(key, value);
     });
   }
+
+  // Clean up potential streaming markers and problematic sequences
+  result = cleanContent(result);
+  
   return result;
+}
+
+/**
+ * Clean content to avoid streaming parsing issues
+ */
+function cleanContent(content: string): string {
+  return content
+    // Remove potential SSE (Server-Sent Events) markers that might confuse streaming
+    .replace(/^data:\s*/gm, '')
+    .replace(/^event:\s*/gm, '')
+    .replace(/^\[DONE\]$/gm, '')
+    // Remove excessive newlines and whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\r\n/g, '\n')
+    // Remove potential JSON-like structures that might be parsed incorrectly
+    .replace(/\{"choices":\[.*?\]\}/g, '')
+    .replace(/\{"delta":\{.*?\}\}/g, '')
+    // Trim and normalize
+    .trim();
 }

@@ -143,13 +143,35 @@ Would you like to try with a shorter version?`}
   // Use processContent if available, otherwise use the original content
   const finalContent = processContent || content;
 
+  // Clean and prepare content for AI processing
+  const preparedContent = prepareContentForAI(finalContent);
+
   // Only render the summary when we have content
   return (
     <LLMValidation>
       <CommandTemplate
-        userQuery={finalContent}
+        userQuery={preparedContent}
         customPrompt={preferences.prompt}
       />
     </LLMValidation>
   );
+}
+
+/**
+ * Prepare content for AI processing to avoid streaming issues
+ */
+function prepareContentForAI(content: string): string {
+  // Remove any potential streaming markers or problematic sequences
+  const cleaned = content
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .replace(/\n+/g, '\n')
+    .trim();
+
+  // Ensure content doesn't exceed reasonable limits for AI processing
+  if (cleaned.length > 50000) {
+    return cleaned.substring(0, 50000) + '\n\n[Content truncated for processing...]';
+  }
+
+  return cleaned;
 }
