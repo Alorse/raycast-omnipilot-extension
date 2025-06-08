@@ -93,23 +93,6 @@ export function CommandTemplate({
           ? ''
           : 'No query provided. Please provide a query as an argument.')
       }
-      // metadata={
-      //   currentConfig ? (
-      //     <Detail.Metadata>
-      //       <Detail.Metadata.Label title="Query" text={query || "No query provided"} />
-      //       <Detail.Metadata.Label title="Model" text={currentConfig.model} />
-      //       <Detail.Metadata.Label title="API Provider" text={currentConfig.provider} />
-      //       {currentConfig.configName && (
-      //         <Detail.Metadata.Label title="Configuration" text={currentConfig.configName} />
-      //       )}
-      //     </Detail.Metadata>
-      //   ) : (
-      //     <Detail.Metadata>
-      //       <Detail.Metadata.Label title="Query" text={query || "No query provided"} />
-      //       <Detail.Metadata.Label title="Status" text="Loading configuration..." />
-      //     </Detail.Metadata>
-      //   )
-      // }
     />
   );
 }
