@@ -112,17 +112,7 @@
       "title": "Create Calendar Event",
       "subtitle": "Omni Pilot - Extract Calendar Event from Text",
       "description": "Extract calendar event information from selected text and create Google Calendar event",
-      "mode": "view",
-      "preferences": [
-        {
-          "name": "defaultLanguage",
-          "title": "Output Language",
-          "description": "The language to use for event extraction and descriptions",
-          "type": "textfield",
-          "required": false,
-          "default": "English"
-        }
-      ]
+      "mode": "view"
     }
   ],
   "dependencies": {
