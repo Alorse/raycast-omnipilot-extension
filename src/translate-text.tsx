@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { getSelectedText, Detail } from '@raycast/api';
+import { Detail } from '@raycast/api';
+import { getSelectedText } from './utils/getSelectedText';
 import { CommandTemplate } from './lib/commandTemplate';
 import { LLMValidation } from './components/LLMValidation';
 
@@ -9,7 +10,7 @@ interface Arguments {
 
 export default function TranslateText(props: { arguments: Arguments }) {
   const hasExecutedRef = useRef(false);
-  const [selectedText, setSelectedText] = useState<string | null>('');
+  const selectedTextRef = useRef<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(true);
 
   const { TranslateLanguage } = props.arguments;
@@ -17,18 +18,18 @@ export default function TranslateText(props: { arguments: Arguments }) {
   useEffect(() => {
     // Prevent double execution in React Strict Mode
     if (hasExecutedRef.current) {
-      setSelectedText(null);
+      selectedTextRef.current = null;
       return;
     }
 
     async function fetchSelectedText() {
       try {
         const text = await getSelectedText();
-        setSelectedText(text);
+        selectedTextRef.current = text;
         hasExecutedRef.current = true;
       } catch (error) {
         console.error('Error getting selected text:', error);
-        setSelectedText('');
+        selectedTextRef.current = '';
         hasExecutedRef.current = true;
       } finally {
         setIsLoadingText(false);
@@ -42,7 +43,7 @@ export default function TranslateText(props: { arguments: Arguments }) {
     return <Detail isLoading={true} markdown="Getting selected text..." />;
   }
 
-  if (!selectedText || !selectedText.trim()) {
+  if (!selectedTextRef.current || !selectedTextRef.current.trim()) {
     return (
       <Detail markdown="❌ **No text selected**. Please select some text to translate and try again." />
     );
@@ -57,7 +58,7 @@ export default function TranslateText(props: { arguments: Arguments }) {
   return (
     <LLMValidation>
       <CommandTemplate
-        userQuery={selectedText}
+        userQuery={selectedTextRef.current}
         customPrompt={translationPrompt}
       />
     </LLMValidation>
