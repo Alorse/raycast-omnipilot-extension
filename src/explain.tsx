@@ -3,6 +3,7 @@ import { Detail } from '@raycast/api';
 import { getSelectedText } from './utils/getSelectedText';
 import { CommandTemplate } from './lib/commandTemplate';
 import { LLMValidation } from './components/LLMValidation';
+import { NoTextSelected } from './components/NoTextSelected';
 
 export default function ExplainText() {
   const hasExecutedRef = useRef(false);
@@ -36,17 +37,7 @@ export default function ExplainText() {
   }
 
   if (!selectedTextRef.current) {
-    return (
-      <Detail
-        markdown={`❌ **No text to explain**
-
-Please select some text and try again.
-
-**How to use:**
-- Select text and run the command
-- The selected text will be explained in detail`}
-      />
-    );
+    return <NoTextSelected commandName="the explain command" />;
   }
 
   return (

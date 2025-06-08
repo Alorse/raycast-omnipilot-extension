@@ -10,6 +10,7 @@ import {
 } from '@raycast/api';
 import { useAIStreaming } from './hooks/useAIStreaming';
 import { LLMValidation } from './components/LLMValidation';
+import { NoTextSelected } from './components/NoTextSelected';
 
 interface CalendarEvent {
   title: string;
@@ -221,9 +222,7 @@ Note:
 
   // No text selected
   if (!selectedTextRef.current) {
-    return (
-      <Detail
-        markdown={`❌ **No text selected**
+    const customMessage = `❌ **No text selected**
 
 Please select text containing event information and try again.
 
@@ -235,9 +234,9 @@ Please select text containing event information and try again.
 **Example text formats:**
 - "Meeting with John tomorrow at 2pm in the conference room"
 - "Dentist appointment on Friday December 15th at 10:30am"
-- "Team presentation next Monday from 9am to 11am at office"`}
-      />
-    );
+- "Team presentation next Monday from 9am to 11am at office"`;
+
+    return <NoTextSelected customMessage={customMessage} />;
   }
 
   // Build markdown content based on current state

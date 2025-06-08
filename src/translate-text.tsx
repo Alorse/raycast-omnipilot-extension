@@ -3,6 +3,7 @@ import { Detail } from '@raycast/api';
 import { getSelectedText } from './utils/getSelectedText';
 import { CommandTemplate } from './lib/commandTemplate';
 import { LLMValidation } from './components/LLMValidation';
+import { NoTextSelected } from './components/NoTextSelected';
 
 interface Arguments {
   TranslateLanguage: string;
@@ -44,9 +45,7 @@ export default function TranslateText(props: { arguments: Arguments }) {
   }
 
   if (!selectedTextRef.current || !selectedTextRef.current.trim()) {
-    return (
-      <Detail markdown="❌ **No text selected**. Please select some text to translate and try again." />
-    );
+    return <NoTextSelected commandName="the translate command" />;
   }
 
   // Build the translation prompt
