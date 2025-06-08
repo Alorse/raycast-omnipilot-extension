@@ -55,7 +55,9 @@ async function processNodeStream(
   let usage: TokenUsage | undefined;
 
   for await (const chunk of nodeStream) {
-    const chunkStr = Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk);
+    const chunkStr = Buffer.isBuffer(chunk)
+      ? chunk.toString('utf8')
+      : String(chunk);
     buffer += chunkStr;
 
     const result = processSSELines(buffer, onChunk);

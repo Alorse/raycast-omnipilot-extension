@@ -170,7 +170,9 @@ function prepareContentForAI(content: string): string {
 
   // Ensure content doesn't exceed reasonable limits for AI processing
   if (cleaned.length > 50000) {
-    return cleaned.substring(0, 50000) + '\n\n[Content truncated for processing...]';
+    return (
+      cleaned.substring(0, 50000) + '\n\n[Content truncated for processing...]'
+    );
   }
 
   return cleaned;
