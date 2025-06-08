@@ -23,7 +23,7 @@ interface CalendarEvent {
 
 export default function CreateCalendarEvent() {
   const hasExecutedRef = useRef(false);
-  const [selectedText, setSelectedText] = useState<string | null>('');
+  const selectedTextRef = useRef<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(true);
   const [calendarEvent, setCalendarEvent] = useState<CalendarEvent | null>(
     null,
@@ -47,10 +47,10 @@ export default function CreateCalendarEvent() {
     async function fetchSelectedText() {
       try {
         const selected = await getSelectedText();
-        setSelectedText(selected);
+        selectedTextRef.current = selected;
       } catch (error) {
         console.error('No text selected:', error);
-        setSelectedText(null);
+        selectedTextRef.current = null;
       } finally {
         setIsLoadingText(false);
       }
@@ -206,13 +206,13 @@ Note:
       return;
     }
 
-    if (selectedText && !isLoading && !response) {
+    if (selectedTextRef.current && !isLoadingText && !isLoading && !response) {
       const systemPrompt = createSystemPrompt();
-      askAI(selectedText, systemPrompt);
-      setSelectedText(null);
+      askAI(selectedTextRef.current, systemPrompt);
+      selectedTextRef.current = null;
       hasExecutedRef.current = true;
     }
-  }, [selectedText, askAI, createSystemPrompt, isLoading, response]);
+  }, [isLoadingText, askAI, createSystemPrompt, isLoading, response]);
 
   // Loading state while getting selected text
   if (isLoadingText) {
@@ -220,7 +220,7 @@ Note:
   }
 
   // No text selected
-  if (!selectedText) {
+  if (!selectedTextRef.current) {
     return (
       <Detail
         markdown={`❌ **No text selected**
