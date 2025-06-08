@@ -10,6 +10,7 @@
     {
       "name": "ask",
       "title": "Ask AI",
+      "icon": "ask-icon.png",
       "description": "Get instant answers to any question using powerful language models.",
       "mode": "view",
       "arguments": [
@@ -34,6 +35,7 @@
     {
       "name": "translate-text",
       "title": "Translate",
+      "icon": "translate-icon.png",
       "subtitle": "Omni Pilot - Translate Selected Text",
       "description": "Translate selected text",
       "mode": "view",
@@ -75,6 +77,7 @@
     {
       "name": "ask-about-text",
       "title": "Ask About Text",
+      "icon": "ask-about-text-icon.png",
       "subtitle": "Omni Pilot - Ask About Selected Text",
       "description": "Ask questions about selected text",
       "mode": "view",
@@ -100,6 +103,7 @@
     {
       "name": "explain",
       "title": "Explain",
+      "icon": "explain-icon.png",
       "subtitle": "Omni Pilot - Explain Selected Text",
       "description": "Explain Selected Text",
       "mode": "view",
@@ -117,6 +121,7 @@
     {
       "name": "summarize",
       "title": "Summarize",
+      "icon": "summarize-icon.png",
       "subtitle": "Omni Pilot - Summarize Selected Text",
       "description": "Summarize Selected Text",
       "mode": "view",
@@ -134,24 +139,28 @@
     {
       "name": "command-history",
       "title": "Command History",
+      "icon": "command-history-icon.png",
       "description": "View and manage your AI command history.",
       "mode": "view"
     },
     {
       "name": "manage-llms",
       "title": "Manage Llms",
+      "icon": "manage-llms-icon.png",
       "description": "Add, edit, and manage your AI language model configurations.",
       "mode": "view"
     },
     {
       "name": "chat",
       "title": "Chat",
+      "icon": "chat-icon.png",
       "description": "Have conversational AI interactions with memory and context.",
       "mode": "view"
     },
     {
       "name": "create-calendar-event",
       "title": "Create Calendar Event",
+      "icon": "create-calendar-event-icon.png",
       "subtitle": "Omni Pilot - Extract Calendar Event from Text",
       "description": "Extract calendar event information from selected text and create Google Calendar event",
       "mode": "view"
@@ -159,6 +168,7 @@
     {
       "name": "summarize-website",
       "title": "Summarize Website",
+      "icon": "summarize-website-icon.png",
       "subtitle": "Omni Pilot - Summarize YouTube Videos & Webpages",
       "description": "Summarize content from YouTube videos and webpages using the browser extension",
       "mode": "view",
