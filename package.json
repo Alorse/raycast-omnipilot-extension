@@ -114,7 +114,7 @@
         }
       ]
     },
-        {
+    {
       "name": "summarize",
       "title": "Summarize",
       "subtitle": "Omni Pilot - Summarize Selected Text",
@@ -155,11 +155,29 @@
       "subtitle": "Omni Pilot - Extract Calendar Event from Text",
       "description": "Extract calendar event information from selected text and create Google Calendar event",
       "mode": "view"
+    },
+    {
+      "name": "summarize-website",
+      "title": "Summarize Website",
+      "subtitle": "Omni Pilot - Summarize YouTube Videos & Webpages",
+      "description": "Summarize content from YouTube videos and webpages using the browser extension",
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "prompt",
+          "title": "System Prompt",
+          "description": "The prompt to use for this command.",
+          "type": "textfield",
+          "required": false,
+          "default": "Create a comprehensive summary of the following content. Include the main points, and important details. Structure your response with clear headings and bullet points when appropriate, using the same language as the original text."
+        }
+      ]
     }
   ],
   "dependencies": {
     "@raycast/api": "^1.99.3",
-    "@raycast/utils": "^1.17.0"
+    "@raycast/utils": "^1.17.0",
+    "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.0.4",
