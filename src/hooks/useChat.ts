@@ -151,10 +151,13 @@ export function useChat() {
       const conversationIndex = updatedConversations.findIndex(
         (conv) => conv.id === updatedConversation.id,
       );
-      
+
       if (conversationIndex > 0) {
         // Remove the conversation from its current position
-        const conversation = updatedConversations.splice(conversationIndex, 1)[0];
+        const conversation = updatedConversations.splice(
+          conversationIndex,
+          1,
+        )[0];
         // Add it to the beginning of the array
         updatedConversations.unshift(conversation);
       }
