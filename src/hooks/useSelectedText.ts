@@ -10,10 +10,11 @@ interface UseSelectedTextReturn {
 /**
  * Custom hook for handling selected text retrieval with caching and error handling
  * Prevents double execution in React Strict Mode and provides loading state
+ * Uses useRef for selectedText to avoid state-related re-render issues
  */
 export function useSelectedText(): UseSelectedTextReturn {
   const hasExecutedRef = useRef(false);
-  const [selectedText, setSelectedText] = useState<string | null>(null);
+  const selectedTextRef = useRef<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(true);
 
   useEffect(() => {
@@ -25,10 +26,10 @@ export function useSelectedText(): UseSelectedTextReturn {
     async function fetchSelectedText() {
       try {
         const selected = await getSelectedText();
-        setSelectedText(selected);
+        selectedTextRef.current = selected;
       } catch (error) {
         console.error('Error getting selected text:', error);
-        setSelectedText(null);
+        selectedTextRef.current = null;
       } finally {
         setIsLoadingText(false);
         hasExecutedRef.current = true;
@@ -39,7 +40,7 @@ export function useSelectedText(): UseSelectedTextReturn {
   }, []);
 
   return {
-    selectedText,
+    selectedText: selectedTextRef.current,
     isLoadingText,
     hasExecuted: hasExecutedRef.current,
   };
