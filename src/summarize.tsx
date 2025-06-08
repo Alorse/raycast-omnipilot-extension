@@ -8,16 +8,16 @@ interface Preferences {
   prompt: string;
 }
 
-export default function ExplainText() {
+export default function SummarizeText() {
   const { selectedText, isLoadingText } = useSelectedText();
   const preferences = getPreferenceValues<Preferences>();
 
   if (isLoadingText) {
-    return <Detail isLoading={true} markdown="Getting text to explain..." />;
+    return <Detail isLoading={true} markdown="Getting text to summarize..." />;
   }
 
   if (!selectedText) {
-    return <NoTextSelected commandName="the explain command" />;
+    return <NoTextSelected commandName="the summarize command" />;
   }
 
   return (

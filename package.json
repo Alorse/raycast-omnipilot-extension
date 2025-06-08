@@ -73,6 +73,31 @@
       ]
     },
     {
+      "name": "ask-about-text",
+      "title": "Ask About Text",
+      "subtitle": "Omni Pilot - Ask About Selected Text",
+      "description": "Ask questions about selected text",
+      "mode": "view",
+      "arguments": [
+        {
+          "name": "query",
+          "placeholder": "What would you like to know about this text?",
+          "type": "text",
+          "required": true
+        }
+      ],
+      "preferences": [
+        {
+          "name": "prompt",
+          "title": "System Prompt",
+          "description": "The prompt to use for this command.",
+          "type": "textfield",
+          "required": false,
+          "default": "Answer the user's question about the following text as accurately and helpfully as possible, using the same language the user used to ask the question."
+        }
+      ]
+    },
+    {
       "name": "explain",
       "title": "Explain",
       "subtitle": "Omni Pilot - Explain Selected Text",
@@ -86,6 +111,23 @@
           "type": "textfield",
           "required": false,
           "default": "Explain the following text as best as you can, using the same language as the original text."
+        }
+      ]
+    },
+        {
+      "name": "summarize",
+      "title": "Summarize",
+      "subtitle": "Omni Pilot - Summarize Selected Text",
+      "description": "Summarize Selected Text",
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "prompt",
+          "title": "System Prompt",
+          "description": "The prompt to use for this command.",
+          "type": "textfield",
+          "required": false,
+          "default": "Summarize the following text as best as you can, using the same language as the original text."
         }
       ]
     },
