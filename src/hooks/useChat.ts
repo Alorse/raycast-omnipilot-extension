@@ -157,14 +157,6 @@ export function useChat() {
         const conversation = updatedConversations.splice(conversationIndex, 1)[0];
         // Add it to the beginning of the array
         updatedConversations.unshift(conversation);
-        
-        console.warn(
-          `📌 [CONVERSATION ORDER] Moved conversation ${updatedConversation.id} to first position`,
-        );
-        console.warn(
-          `📌 [CONVERSATION ORDER] New order:`,
-          updatedConversations.map((c) => ({ id: c.id, title: c.title })),
-        );
       }
 
       setState((prev) => ({

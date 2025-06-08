@@ -66,11 +66,15 @@ export function ChatActions({
           </ActionPanel.Section>
         )}
 
-      {/* New Chat Action - disabled */}
+      <Action
+        title="Send Message"
+        icon={Icon.Plus}
+        onAction={() => {}} // Avoid sending empty messages
+      />
       <Action
         title="New Chat"
         icon={Icon.Plus}
-        onAction={() => {}}
+        onAction={handleCreateConversation}
         shortcut={{ modifiers: ['cmd'], key: 'n' }}
       />
 
