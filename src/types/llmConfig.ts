@@ -27,6 +27,13 @@ export const DEFAULT_LLMS: Omit<LLMConfig, 'id' | 'apiKey'>[] = [
     isActive: true,
   },
   {
+    name: 'GitHub Copilot',
+    apiUrl: 'https://api.githubcopilot.com',
+    model: 'gpt-4o',
+    isDefault: false,
+    isActive: false,
+  },
+  {
     name: 'OpenAI',
     apiUrl: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',

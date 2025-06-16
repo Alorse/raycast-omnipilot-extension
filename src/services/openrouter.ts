@@ -1,10 +1,11 @@
 import { OpenRouterMessage, StreamingOptions } from '../types';
 import { processStreamingResponse } from '../utils/streaming';
 import { LLMConfigManager } from './llmConfigManager';
+import { GitHubCopilotService } from './githubCopilot';
 
 /**
  * AI API service for making streaming chat completions
- * Supports OpenRouter, OpenAI, Anthropic, and other compatible APIs
+ * Supports OpenRouter, OpenAI, Anthropic, GitHub Copilot, and other compatible APIs
  */
 export class AIService {
   private apiKey: string;
@@ -28,6 +29,20 @@ export class AIService {
     options: StreamingOptions = {},
   ): Promise<string> {
     try {
+      // Check if this is GitHub Copilot
+      if (
+        this.baseUrl.includes('githubcopilot.com') ||
+        this.baseUrl.includes('api.github.com')
+      ) {
+        const copilotService = new GitHubCopilotService(this.apiKey);
+        return await copilotService.streamChatCompletion(
+          messages,
+          model,
+          options,
+        );
+      }
+
+      // Original implementation for other providers
       // First, do the streaming request
       const streamResponse = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',

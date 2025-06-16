@@ -113,6 +113,14 @@ const PROVIDERS: ProviderInfo[] = [
     hostnames: ['inference-api.nousresearch.com', 'nousresearch.com'],
   },
   {
+    id: 'github-copilot',
+    name: 'GitHub Copilot',
+    displayName: 'GitHub Copilot',
+    color: '#24292e',
+    icon: 'githubcopilot.svg',
+    hostnames: ['api.github.com', 'api.githubcopilot.com', 'github.com'],
+  },
+  {
     id: 'asi1',
     name: 'ASI:ONE',
     displayName: 'ASI:ONE',

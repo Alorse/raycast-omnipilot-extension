@@ -1,6 +1,7 @@
 import { LLMConfigManager } from '../services/llmConfigManager';
 import { LLMConfig } from '../types/llmConfig';
 import { getProviderName } from './providers';
+import { GitHubCopilotService } from '../services/githubCopilot';
 
 /**
  * Get a summary of the current LLM configuration status
@@ -73,4 +74,41 @@ export async function getLLMStatusDescription(): Promise<string> {
   }
 
   return `Using "${status.activeConfig.name}" with model "${status.activeConfig.model}" via ${getProviderName(status.activeConfig.apiUrl)}`;
+}
+
+/**
+ * Validate a specific LLM configuration
+ * @param config - The LLM configuration to validate
+ * @returns Promise with validation result
+ */
+export async function validateLLMConfig(config: LLMConfig): Promise<{
+  valid: boolean;
+  error?: string;
+}> {
+  if (!config.apiKey || config.apiKey.trim() === '') {
+    return { valid: false, error: 'API key is required' };
+  }
+
+  // Special validation for GitHub Copilot
+  if (
+    config.name === 'GitHub Copilot' ||
+    config.apiUrl?.includes('githubcopilot.com') ||
+    config.apiUrl?.includes('api.github.com')
+  ) {
+    try {
+      const copilotService = new GitHubCopilotService(config.apiKey);
+      return await copilotService.validateToken();
+    } catch (error) {
+      return {
+        valid: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'GitHub Copilot validation failed',
+      };
+    }
+  }
+
+  // For other providers, just check if API key exists
+  return { valid: true };
 }

@@ -18,6 +18,7 @@ import {
   getProviderIcon,
   getProviderColor,
 } from './utils/providers';
+import { validateLLMConfig } from './utils/llmStatus';
 
 export default function ManageLLMs() {
   const {
@@ -255,6 +256,28 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
     try {
       setIsLoading(true);
 
+      // Create a temporary config object for validation
+      const tempConfig: LLMConfig = {
+        id: config?.id || 'temp',
+        name: values.name,
+        apiUrl: values.apiUrl,
+        apiKey: values.apiKey,
+        model: values.model,
+        isDefault: values.isDefault,
+        isActive: true,
+      };
+
+      // Validate the configuration, especially for GitHub Copilot
+      const validation = await validateLLMConfig(tempConfig);
+      if (!validation.valid) {
+        showToast({
+          style: Toast.Style.Failure,
+          title: 'Configuration validation failed',
+          message: validation.error || 'Invalid configuration',
+        });
+        return;
+      }
+
       if (config) {
         // Update existing config
         await (
@@ -263,7 +286,7 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         showToast({
           style: Toast.Style.Success,
           title: 'Configuration updated',
-          message: `"${values.name}" has been updated`,
+          message: `"${values.name}" has been updated and validated`,
         });
       } else {
         // Create new config
@@ -273,7 +296,7 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         showToast({
           style: Toast.Style.Success,
           title: 'Configuration created',
-          message: `"${values.name}" has been added`,
+          message: `"${values.name}" has been added and validated`,
         });
       }
 
@@ -324,8 +347,9 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
       <Form.PasswordField
         id="apiKey"
         title="API Key"
-        placeholder="sk-..."
+        placeholder="sk-... (or GitHub access token for Copilot)"
         defaultValue={config?.apiKey || ''}
+        info="For GitHub Copilot: Use your GitHub access token (from https://github.com/settings/tokens). For other providers: Use their respective API keys."
       />
 
       <Form.TextField
