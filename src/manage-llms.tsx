@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Action,
   ActionPanel,
@@ -12,13 +12,14 @@ import {
   useNavigation,
 } from '@raycast/api';
 import { useLLMConfigs } from './hooks/useLLMConfigs';
-import { LLMConfig, LLMConfigFormData } from './types/llmConfig';
+import { LLMConfig, LLMConfigFormData, CachedModels } from './types/llmConfig';
 import {
   getProviderName,
   getProviderIcon,
   getProviderColor,
 } from './utils/providers';
 import { validateLLMConfig } from './utils/llmStatus';
+import { LLMConfigManager } from './services/llmConfigManager';
 
 export default function ManageLLMs() {
   const {
@@ -93,6 +94,38 @@ export default function ManageLLMs() {
       showToast({
         style: Toast.Style.Failure,
         title: 'Failed to duplicate configuration',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  const handleRefreshModels = async (config: LLMConfig) => {
+    try {
+      showToast({
+        style: Toast.Style.Animated,
+        title: 'Refreshing models...',
+        message: `Fetching models for ${config.name}`,
+      });
+
+      const models = await LLMConfigManager.fetchAndCacheModels(config);
+      
+      if (models.isAvailable && models.models.length > 0) {
+        showToast({
+          style: Toast.Style.Success,
+          title: 'Models refreshed',
+          message: `Found ${models.models.length} models for ${config.name}`,
+        });
+      } else {
+        showToast({
+          style: Toast.Style.Failure,
+          title: 'No models available',
+          message: models.errorMessage || 'No models found or endpoint not available',
+        });
+      }
+    } catch (error) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: 'Failed to refresh models',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
@@ -173,12 +206,46 @@ export default function ManageLLMs() {
                       }
                     />
 
+                    {config.cachedModels && (
+                      <>
+                        <List.Item.Detail.Metadata.Separator />
+                        <List.Item.Detail.Metadata.Label
+                          title="Available Models"
+                          text={
+                            config.cachedModels.isAvailable
+                              ? `${config.cachedModels.models.length} models cached`
+                              : 'Models not available'
+                          }
+                          icon={
+                            config.cachedModels.isAvailable
+                              ? Icon.CheckCircle
+                              : Icon.ExclamationMark
+                          }
+                        />
+                        <List.Item.Detail.Metadata.Label
+                          title="Last Updated"
+                          text={config.cachedModels.lastUpdated.toLocaleString()}
+                          icon={Icon.Clock}
+                        />
+                        {config.cachedModels.errorMessage && (
+                          <List.Item.Detail.Metadata.Label
+                            title="Error"
+                            text={config.cachedModels.errorMessage}
+                            icon={Icon.ExclamationMark}
+                          />
+                        )}
+                      </>
+                    )}
+
                     {config.createdAt && (
-                      <List.Item.Detail.Metadata.Label
-                        title="Created"
-                        text={new Date(config.createdAt).toLocaleDateString()}
-                        icon={Icon.Calendar}
-                      />
+                      <>
+                        <List.Item.Detail.Metadata.Separator />
+                        <List.Item.Detail.Metadata.Label
+                          title="Created"
+                          text={new Date(config.createdAt).toLocaleDateString()}
+                          icon={Icon.Calendar}
+                        />
+                      </>
                     )}
                   </List.Item.Detail.Metadata>
                 }
@@ -207,6 +274,12 @@ export default function ManageLLMs() {
                     title="Duplicate Configuration"
                     icon={Icon.Duplicate}
                     onAction={() => handleDuplicate(config)}
+                  />
+                  <Action
+                    title="Refresh Models"
+                    icon={Icon.ArrowClockwise}
+                    shortcut={{ modifiers: ["cmd"], key: "r" }}
+                    onAction={() => handleRefreshModels(config)}
                   />
                 </ActionPanel.Section>
                 <ActionPanel.Section>
@@ -251,6 +324,56 @@ interface LLMConfigFormProps {
 function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
   const { pop } = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
+  const [cachedModels, setCachedModels] = useState<CachedModels | null>(config?.cachedModels || null);
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
+
+  // Load cached models when component mounts or config changes
+  useEffect(() => {
+    if (config?.cachedModels) {
+      setCachedModels(config.cachedModels);
+    }
+  }, [config]);
+
+  const fetchModels = async (tempConfig?: LLMConfig) => {
+    const configToUse = tempConfig || config;
+    if (!configToUse || !configToUse.apiKey || !configToUse.apiUrl) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: 'Cannot fetch models',
+        message: 'API URL and API Key are required to fetch models',
+      });
+      return;
+    }
+
+    try {
+      setIsFetchingModels(true);
+      const models = await LLMConfigManager.getModels(configToUse, true);
+      setCachedModels(models);
+
+      if (models.isAvailable && models.models.length > 0) {
+        showToast({
+          style: Toast.Style.Success,
+          title: 'Models fetched',
+          message: `Found ${models.models.length} models`,
+        });
+      } else {
+        showToast({
+          style: Toast.Style.Failure,
+          title: 'No models available',
+          message: models.errorMessage || 'No models found or endpoint not available',
+        });
+      }
+    } catch (error) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: 'Failed to fetch models',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsFetchingModels(false);
+    }
+  };
+
 
   const handleSubmit = async (values: LLMConfigFormData) => {
     try {
@@ -278,9 +401,11 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         return;
       }
 
+      let savedConfig: LLMConfig;
+      
       if (config) {
         // Update existing config
-        await (
+        savedConfig = await (
           onSave as (id: string, data: LLMConfigFormData) => Promise<LLMConfig>
         )(config.id, values);
         showToast({
@@ -290,7 +415,7 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         });
       } else {
         // Create new config
-        await (onSave as (data: LLMConfigFormData) => Promise<LLMConfig>)(
+        savedConfig = await (onSave as (data: LLMConfigFormData) => Promise<LLMConfig>)(
           values,
         );
         showToast({
@@ -298,6 +423,20 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
           title: 'Configuration created',
           message: `"${values.name}" has been added and validated`,
         });
+
+        // Automatically fetch models for new configurations
+        if (savedConfig && !config) {
+          try {
+            showToast({
+              style: Toast.Style.Animated,
+              title: 'Fetching available models...',
+            });
+            await LLMConfigManager.fetchAndCacheModels(savedConfig);
+          } catch (error) {
+            // Don't fail the save if model fetching fails
+            console.warn('Failed to fetch models for new config:', error);
+          }
+        }
       }
 
       pop();
@@ -326,6 +465,16 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
             title={config ? 'Update Configuration' : 'Create Configuration'}
             onSubmit={handleSubmit}
           />
+          {config && (
+            <ActionPanel.Section>
+              <Action
+                title={isFetchingModels ? "Refreshing Models..." : "Refresh Models"}
+                icon={Icon.ArrowClockwise}
+                shortcut={{ modifiers: ["cmd"], key: "r" }}
+                onAction={() => fetchModels(config)}
+              />
+            </ActionPanel.Section>
+          )}
         </ActionPanel>
       }
     >
@@ -352,12 +501,47 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         info="For GitHub Copilot: Use your GitHub access token (from https://github.com/settings/tokens). For other providers: Use their respective API keys."
       />
 
-      <Form.TextField
-        id="model"
-        title="Model Name"
-        placeholder="gpt-4o-mini, claude-3-haiku-20240307, gemini-pro"
-        defaultValue={config?.model || ''}
-        info="The model identifier used by the API"
+      {/* Model Selection - Dropdown if models available, otherwise text field */}
+      {cachedModels?.isAvailable && cachedModels.models.length > 0 ? (
+        <Form.Dropdown
+          id="model"
+          title="Model Name"
+          defaultValue={config?.model || ''}
+          info={`Available models (updated: ${cachedModels.lastUpdated.toLocaleString()})`}
+        >
+          {cachedModels.models.map((model) => (
+            <Form.Dropdown.Item
+              key={model.id}
+              value={model.id}
+              title={model.id}
+            />
+          ))}
+        </Form.Dropdown>
+      ) : (
+        <Form.TextField
+          id="model"
+          title="Model Name"
+          placeholder="gpt-4o-mini, claude-3-haiku-20240307, gemini-pro"
+          defaultValue={config?.model || ''}
+          info={
+            cachedModels?.errorMessage
+              ? `Manual entry required: ${cachedModels.errorMessage}`
+              : "The model identifier used by the API"
+          }
+        />
+      )}
+
+      {/* Fetch Models Button */}
+      <Form.Separator />
+      <Form.Description
+        title="Model Discovery"
+        text={
+          cachedModels?.isAvailable
+            ? `✅ ${cachedModels.models.length} models available (updated: ${cachedModels.lastUpdated.toLocaleString()})`
+            : cachedModels?.errorMessage
+            ? `❌ ${cachedModels.errorMessage}`
+            : "💡 Save the configuration first, then use 'Refresh Models' to fetch available models"
+        }
       />
 
       <Form.Checkbox

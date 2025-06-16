@@ -1,3 +1,17 @@
+export interface ModelInfo {
+  id: string;
+  object?: string;
+  created?: number;
+  owned_by?: string;
+}
+
+export interface CachedModels {
+  models: ModelInfo[];
+  lastUpdated: Date;
+  isAvailable: boolean;
+  errorMessage?: string;
+}
+
 export interface LLMConfig {
   id: string;
   name: string;
@@ -8,6 +22,7 @@ export interface LLMConfig {
   isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  cachedModels?: CachedModels;
 }
 
 export interface LLMConfigFormData {
