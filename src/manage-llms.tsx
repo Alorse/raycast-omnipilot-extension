@@ -281,6 +281,16 @@ export default function ManageLLMs() {
                     shortcut={{ modifiers: ["cmd"], key: "r" }}
                     onAction={() => handleRefreshModels(config)}
                   />
+                  <Action.CopyToClipboard
+                    title="Copy API Key"
+                    content={config.apiKey}
+                    icon={Icon.Clipboard}
+                  />
+                  <Action.CopyToClipboard
+                    title="Copy Current Model"
+                    content={config.model}
+                    icon={Icon.Clipboard}
+                  />
                 </ActionPanel.Section>
                 <ActionPanel.Section>
                   <Action
