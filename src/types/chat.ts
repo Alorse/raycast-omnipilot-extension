@@ -2,6 +2,8 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  /** Reasoning/thinking tokens returned by reasoning models (shown collapsed) */
+  reasoning?: string;
   timestamp: string;
   tokenUsage?: {
     prompt_tokens: number;

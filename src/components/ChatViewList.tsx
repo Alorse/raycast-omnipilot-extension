@@ -17,6 +17,9 @@ export function ChatViewList() {
     conversations,
     currentConversation,
     isLoading,
+    showReasoning,
+    hasReasoning,
+    toggleShowReasoning,
   } = useChatLogic();
 
   // Early return AFTER all hooks
@@ -69,6 +72,9 @@ export function ChatViewList() {
                 handleCreateConversation={handleCreateConversation}
                 handleDeleteConversation={handleDeleteConversation}
                 conversationId={conversation.id}
+                showReasoning={showReasoning}
+                hasReasoning={hasReasoning}
+                toggleShowReasoning={toggleShowReasoning}
               />
             }
           />

@@ -48,18 +48,20 @@ export function useChatLogic() {
     deleteConversation,
   } = useChat();
 
-  const { response, isLoading, tokenUsage, chatWithHistory, clearResponse } =
+  const { response, reasoning, isLoading, tokenUsage, chatWithHistory, clearResponse } =
     useAIStreaming();
   const [isInitialized, setIsInitialized] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [showReasoning, setShowReasoning] = useState(false);
   const [currentConfig, setCurrentConfig] = useState<{
     model: string;
     provider: string;
     configName?: string;
   } | null>(null);
 
-  const responseStartRef = useRef<string>('');
+  const responseStartRef = useRef('');
   const processingResponseRef = useRef(false);
+  const fullReasoningRef = useRef('');
 
   // Single initialization effect
   useEffect(() => {
@@ -134,16 +136,20 @@ export function useChatLogic() {
       // Only process if response has changed from what we started with
       if (response !== responseStartRef.current && response.trim()) {
         processingResponseRef.current = true;
+        // Auto-collapse the reasoning once the final answer arrives
+        setShowReasoning(false);
 
         addMessage(
           response,
           'assistant',
           currentConversation.id,
           tokenUsage || undefined,
+          fullReasoningRef.current || undefined,
         )
           .then(() => {
             clearResponse();
             responseStartRef.current = '';
+            fullReasoningRef.current = '';
             processingResponseRef.current = false;
           })
           .catch((error) => {
@@ -194,6 +200,7 @@ export function useChatLogic() {
         // Start AI response
         responseStartRef.current = response;
         processingResponseRef.current = false;
+        fullReasoningRef.current = '';
 
         await chatWithHistory(messages);
       } catch (error) {
@@ -297,17 +304,29 @@ export function useChatLogic() {
     const messages = [...currentMessages];
 
     // Add current streaming response as a temporary message
-    if (isLoading && response) {
+    if (isLoading && (response || reasoning)) {
       messages.push({
         id: 'streaming',
         role: 'assistant' as const,
-        content: response,
+        content: response || '…',
+        reasoning: reasoning || undefined,
         timestamp: new Date().toISOString(),
       });
     }
 
     return messages;
-  }, [currentMessages, isLoading, response]);
+  }, [currentMessages, isLoading, response, reasoning]);
+
+  // Keep the full reasoning available for persistence when the response completes
+  useEffect(() => {
+    if (isLoading && reasoning) {
+      fullReasoningRef.current = reasoning;
+    }
+  }, [isLoading, reasoning]);
+
+  const toggleShowReasoning = useCallback(() => {
+    setShowReasoning((prev) => !prev);
+  }, []);
 
   // Build chat content as markdown for better readability
   const buildChatMarkdown = useCallback(() => {
@@ -326,16 +345,28 @@ export function useChatLogic() {
           ? ` *(${message.tokenUsage.total_tokens} tokens)*`
           : '';
 
-        return `${role} ${tokens} - ${time}
+        let block = `${role} ${tokens} - ${time}`;
 
-${message.content}
+        // Reasoning section: streamed live while thinking, then collapsed
+        // behind a toggle (Raycast markdown has no <details> support).
+        if (message.reasoning) {
+          const isStreaming = message.id === 'streaming' && isLoading;
+          if (isStreaming || showReasoning) {
+            const quoted = message.reasoning.replace(/\n/g, '\n> ');
+            block += `\n\n> 🧠 **${isStreaming ? 'Thinking…' : 'Reasoning'}**\n>\n> ${quoted}`;
+          } else {
+            block += ` *(🧠 reasoning hidden — ⌘R to toggle)*`;
+          }
+        }
 
----`;
+        block += `\n\n${message.content}\n\n---`;
+
+        return block;
       })
       .join('\n\n');
 
     return chatContent;
-  }, [allMessages, currentConversation, currentConfig, formatMessageTime]);
+  }, [allMessages, currentConversation, currentConfig, formatMessageTime, isLoading, showReasoning]);
 
   return {
     // State
@@ -356,6 +387,11 @@ ${message.content}
     handleDeleteConversation,
     handleCreateConversation,
     formatMessageTime,
+    toggleShowReasoning,
+
+    // Reasoning visibility
+    showReasoning,
+    hasReasoning: allMessages.some((m) => m.reasoning),
 
     // From hooks
     conversations,
