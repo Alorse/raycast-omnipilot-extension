@@ -1,4 +1,8 @@
-import { OpenRouterStreamChunk, TokenUsage, extractReasoningFromDelta } from '../types';
+import {
+  OpenRouterStreamChunk,
+  TokenUsage,
+  extractReasoningFromDelta,
+} from '../types';
 
 /**
  * Processes SSE lines and extracts content and reasoning chunks
@@ -7,7 +11,12 @@ function processSSELines(
   buffer: string,
   onChunk: (content: string) => void,
   onReasoningChunk?: (reasoning: string) => void,
-): { newBuffer: string; fullResponse: string; fullReasoning: string; usage?: TokenUsage } {
+): {
+  newBuffer: string;
+  fullResponse: string;
+  fullReasoning: string;
+  usage?: TokenUsage;
+} {
   let fullResponse = '';
   let fullReasoning = '';
   let usage: TokenUsage | undefined;
@@ -58,7 +67,11 @@ async function processNodeStream(
   response: Response,
   onChunk: (content: string) => void,
   onReasoningChunk?: (reasoning: string) => void,
-): Promise<{ fullResponse: string; fullReasoning: string; usage?: TokenUsage }> {
+): Promise<{
+  fullResponse: string;
+  fullReasoning: string;
+  usage?: TokenUsage;
+}> {
   const nodeStream = response.body as unknown as AsyncIterable<Buffer>;
   let buffer = '';
   let fullResponse = '';
@@ -90,7 +103,11 @@ async function processWebStream(
   response: Response,
   onChunk: (content: string) => void,
   onReasoningChunk?: (reasoning: string) => void,
-): Promise<{ fullResponse: string; fullReasoning: string; usage?: TokenUsage }> {
+): Promise<{
+  fullResponse: string;
+  fullReasoning: string;
+  usage?: TokenUsage;
+}> {
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -131,7 +148,11 @@ export async function processStreamingResponse(
   response: Response,
   onChunk: (content: string) => void,
   onReasoningChunk?: (reasoning: string) => void,
-): Promise<{ fullResponse: string; fullReasoning: string; usage?: TokenUsage }> {
+): Promise<{
+  fullResponse: string;
+  fullReasoning: string;
+  usage?: TokenUsage;
+}> {
   if (!response.body) {
     throw new Error('Response body is not available');
   }

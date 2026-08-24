@@ -108,7 +108,7 @@ export default function ManageLLMs() {
       });
 
       const models = await LLMConfigManager.fetchAndCacheModels(config);
-      
+
       if (models.isAvailable && models.models.length > 0) {
         showToast({
           style: Toast.Style.Success,
@@ -119,7 +119,8 @@ export default function ManageLLMs() {
         showToast({
           style: Toast.Style.Failure,
           title: 'No models available',
-          message: models.errorMessage || 'No models found or endpoint not available',
+          message:
+            models.errorMessage || 'No models found or endpoint not available',
         });
       }
     } catch (error) {
@@ -278,7 +279,7 @@ export default function ManageLLMs() {
                   <Action
                     title="Refresh Models"
                     icon={Icon.ArrowClockwise}
-                    shortcut={{ modifiers: ["cmd"], key: "r" }}
+                    shortcut={{ modifiers: ['cmd'], key: 'r' }}
                     onAction={() => handleRefreshModels(config)}
                   />
                   <Action.CopyToClipboard
@@ -334,7 +335,9 @@ interface LLMConfigFormProps {
 function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
   const { pop } = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
-  const [cachedModels, setCachedModels] = useState<CachedModels | null>(config?.cachedModels || null);
+  const [cachedModels, setCachedModels] = useState<CachedModels | null>(
+    config?.cachedModels || null,
+  );
   const [isFetchingModels, setIsFetchingModels] = useState(false);
 
   // Load cached models when component mounts or config changes
@@ -370,7 +373,8 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         showToast({
           style: Toast.Style.Failure,
           title: 'No models available',
-          message: models.errorMessage || 'No models found or endpoint not available',
+          message:
+            models.errorMessage || 'No models found or endpoint not available',
         });
       }
     } catch (error) {
@@ -383,7 +387,6 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
       setIsFetchingModels(false);
     }
   };
-
 
   const handleSubmit = async (values: LLMConfigFormData) => {
     try {
@@ -412,7 +415,7 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
       }
 
       let savedConfig: LLMConfig;
-      
+
       if (config) {
         // Update existing config
         savedConfig = await (
@@ -425,9 +428,9 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         });
       } else {
         // Create new config
-        savedConfig = await (onSave as (data: LLMConfigFormData) => Promise<LLMConfig>)(
-          values,
-        );
+        savedConfig = await (
+          onSave as (data: LLMConfigFormData) => Promise<LLMConfig>
+        )(values);
         showToast({
           style: Toast.Style.Success,
           title: 'Configuration created',
@@ -478,9 +481,11 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
           {config && (
             <ActionPanel.Section>
               <Action
-                title={isFetchingModels ? "Refreshing Models..." : "Refresh Models"}
+                title={
+                  isFetchingModels ? 'Refreshing Models...' : 'Refresh Models'
+                }
                 icon={Icon.ArrowClockwise}
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
+                shortcut={{ modifiers: ['cmd'], key: 'r' }}
                 onAction={() => fetchModels(config)}
               />
             </ActionPanel.Section>
@@ -536,7 +541,7 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
           info={
             cachedModels?.errorMessage
               ? `Manual entry required: ${cachedModels.errorMessage}`
-              : "The model identifier used by the API"
+              : 'The model identifier used by the API'
           }
         />
       )}
@@ -549,8 +554,8 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
           cachedModels?.isAvailable
             ? `✅ ${cachedModels.models.length} models available (updated: ${cachedModels.lastUpdated.toLocaleString()})`
             : cachedModels?.errorMessage
-            ? `❌ ${cachedModels.errorMessage}`
-            : "💡 Save the configuration first, then use 'Refresh Models' to fetch available models"
+              ? `❌ ${cachedModels.errorMessage}`
+              : "💡 Save the configuration first, then use 'Refresh Models' to fetch available models"
         }
       />
 

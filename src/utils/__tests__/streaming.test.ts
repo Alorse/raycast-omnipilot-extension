@@ -43,7 +43,13 @@ describe('extractReasoningFromDelta', () => {
   it('extracts reasoning_details with nested summary array', () => {
     const out = extractReasoningFromDelta({
       reasoning_details: [
-        { type: 'reasoning.summary', summary: [{ type: 'summary_text', text: 'part1' }, { type: 'summary_text', text: ' part2' }] },
+        {
+          type: 'reasoning.summary',
+          summary: [
+            { type: 'summary_text', text: 'part1' },
+            { type: 'summary_text', text: ' part2' },
+          ],
+        },
       ],
     });
     expect(out).toBe('part1 part2');
@@ -91,7 +97,11 @@ describe('processStreamingResponse', () => {
       'data: [DONE]',
     ]);
 
-    const result = await processStreamingResponse(response, () => {}, (r) => reasoningChunks.push(r));
+    const result = await processStreamingResponse(
+      response,
+      () => {},
+      (r) => reasoningChunks.push(r),
+    );
 
     expect(reasoningChunks).toEqual(['pondering']);
     expect(result.fullReasoning).toBe('pondering');

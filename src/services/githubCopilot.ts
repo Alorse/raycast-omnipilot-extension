@@ -157,7 +157,11 @@ export class GitHubCopilotService {
       );
 
       if (options.onComplete) {
-        options.onComplete(result.fullResponse, result.usage, result.fullReasoning);
+        options.onComplete(
+          result.fullResponse,
+          result.usage,
+          result.fullReasoning,
+        );
       }
 
       return result.fullResponse;
