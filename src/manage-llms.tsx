@@ -283,7 +283,7 @@ export default function ManageLLMs() {
                     onAction={() => handleRefreshModels(config)}
                   />
                   <Action.CopyToClipboard
-                    title="Copy API Key"
+                    title="Copy Api Key"
                     content={config.apiKey}
                     icon={Icon.Clipboard}
                   />
@@ -482,7 +482,7 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
             <ActionPanel.Section>
               <Action
                 title={
-                  isFetchingModels ? 'Refreshing Models...' : 'Refresh Models'
+                  isFetchingModels ? 'Refreshing Models…' : 'Refresh Models'
                 }
                 icon={Icon.ArrowClockwise}
                 shortcut={{ modifiers: ['cmd'], key: 'r' }}

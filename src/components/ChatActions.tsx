@@ -107,8 +107,8 @@ export function ChatActions({
         <Action
           title={
             reasoningEnabled === false
-              ? 'Enable Reasoning for This LLM'
-              : 'Disable Reasoning for This LLM'
+              ? 'Enable Reasoning for This Llm'
+              : 'Disable Reasoning for This Llm'
           }
           icon={Icon.Cog}
           onAction={() => {
