@@ -102,15 +102,16 @@ export class AIService {
         throw new Error(errorMessage);
       }
 
-      const { fullResponse, fullReasoning, usage } = await processStreamingResponse(
-        streamResponse,
-        (content) => {
-          options.onChunk?.(content);
-        },
-        (reasoning) => {
-          options.onReasoningChunk?.(reasoning);
-        },
-      );
+      const { fullResponse, fullReasoning, usage } =
+        await processStreamingResponse(
+          streamResponse,
+          (content) => {
+            options.onChunk?.(content);
+          },
+          (reasoning) => {
+            options.onReasoningChunk?.(reasoning);
+          },
+        );
 
       // Call onComplete with the full response, reasoning and usage information
       options.onComplete?.(fullResponse, usage, fullReasoning);
@@ -171,24 +172,24 @@ export class AIService {
           models: [],
           lastUpdated: new Date(),
           isAvailable: false,
-          errorMessage
+          errorMessage,
         };
       }
 
       const data = await response.json();
-      
+
       // Handle different response formats
       let models: ModelInfo[] = [];
-      
+
       const apiResponse = data as ModelsApiResponse | ModelApiResponse[];
-      
+
       if (Array.isArray(apiResponse)) {
         // Direct array format
         models = apiResponse.map((model: ModelApiResponse) => ({
           id: model.id || model.name || '',
           object: model.object,
           created: model.created,
-          owned_by: model.owned_by
+          owned_by: model.owned_by,
         }));
       } else if (apiResponse.data && Array.isArray(apiResponse.data)) {
         // OpenAI/OpenRouter format: { data: [...] }
@@ -196,7 +197,7 @@ export class AIService {
           id: model.id || model.name || '',
           object: model.object,
           created: model.created,
-          owned_by: model.owned_by
+          owned_by: model.owned_by,
         }));
       } else if (apiResponse.models && Array.isArray(apiResponse.models)) {
         // Custom format: { models: [...] }
@@ -204,28 +205,30 @@ export class AIService {
           id: model.id || model.name || '',
           object: model.object,
           created: model.created,
-          owned_by: model.owned_by
+          owned_by: model.owned_by,
         }));
       }
 
       // Filter out empty IDs and sort by ID
       models = models
-        .filter(model => model.id && model.id.trim())
+        .filter((model) => model.id && model.id.trim())
         .sort((a, b) => a.id.localeCompare(b.id));
 
       return {
         models,
         lastUpdated: new Date(),
-        isAvailable: true
+        isAvailable: true,
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error fetching models';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Unknown error fetching models';
       return {
         models: [],
         lastUpdated: new Date(),
         isAvailable: false,
-        errorMessage
+        errorMessage,
       };
     }
   }

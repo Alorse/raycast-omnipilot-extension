@@ -48,8 +48,14 @@ export function useChatLogic() {
     deleteConversation,
   } = useChat();
 
-  const { response, reasoning, isLoading, tokenUsage, chatWithHistory, clearResponse } =
-    useAIStreaming();
+  const {
+    response,
+    reasoning,
+    isLoading,
+    tokenUsage,
+    chatWithHistory,
+    clearResponse,
+  } = useAIStreaming();
   const [isInitialized, setIsInitialized] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [showReasoning, setShowReasoning] = useState(false);
@@ -366,7 +372,14 @@ export function useChatLogic() {
       .join('\n\n');
 
     return chatContent;
-  }, [allMessages, currentConversation, currentConfig, formatMessageTime, isLoading, showReasoning]);
+  }, [
+    allMessages,
+    currentConversation,
+    currentConfig,
+    formatMessageTime,
+    isLoading,
+    showReasoning,
+  ]);
 
   return {
     // State

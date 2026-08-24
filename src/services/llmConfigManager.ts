@@ -1,5 +1,10 @@
 import { LocalStorage } from '@raycast/api';
-import { LLMConfig, LLMConfigFormData, DEFAULT_LLMS, CachedModels } from '../types/llmConfig';
+import {
+  LLMConfig,
+  LLMConfigFormData,
+  DEFAULT_LLMS,
+  CachedModels,
+} from '../types/llmConfig';
 import { AIService } from './openrouter';
 
 const STORAGE_KEY = 'llm-configurations';
@@ -190,7 +195,10 @@ export class LLMConfigManager {
   /**
    * Update cached models for a specific configuration
    */
-  static async updateCachedModels(id: string, cachedModels: CachedModels): Promise<boolean> {
+  static async updateCachedModels(
+    id: string,
+    cachedModels: CachedModels,
+  ): Promise<boolean> {
     const configs = await this.getAllConfigs();
     const configIndex = configs.findIndex((c) => c.id === id);
 
@@ -212,23 +220,24 @@ export class LLMConfigManager {
     try {
       const aiService = new AIService(config.apiKey, config.apiUrl);
       const cachedModels = await aiService.fetchModels();
-      
+
       // Update the configuration with the new cached models
       await this.updateCachedModels(config.id, cachedModels);
-      
+
       return cachedModels;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch models';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to fetch models';
       const cachedModels: CachedModels = {
         models: [],
         lastUpdated: new Date(),
         isAvailable: false,
-        errorMessage
+        errorMessage,
       };
-      
+
       // Still cache the error result
       await this.updateCachedModels(config.id, cachedModels);
-      
+
       return cachedModels;
     }
   }
@@ -236,7 +245,10 @@ export class LLMConfigManager {
   /**
    * Get cached models for a configuration, or fetch them if not available
    */
-  static async getModels(config: LLMConfig, forceRefresh = false): Promise<CachedModels> {
+  static async getModels(
+    config: LLMConfig,
+    forceRefresh = false,
+  ): Promise<CachedModels> {
     // If we have cached models and not forcing refresh, return them
     if (!forceRefresh && config.cachedModels) {
       return config.cachedModels;

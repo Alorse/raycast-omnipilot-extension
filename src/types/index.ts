@@ -43,7 +43,11 @@ export interface TokenUsage {
 export interface StreamingOptions {
   onChunk?: (content: string) => void;
   onReasoningChunk?: (reasoning: string) => void;
-  onComplete?: (fullResponse: string, usage?: TokenUsage, fullReasoning?: string) => void;
+  onComplete?: (
+    fullResponse: string,
+    usage?: TokenUsage,
+    fullReasoning?: string,
+  ) => void;
   onError?: (error: Error) => void;
 }
 
@@ -51,7 +55,9 @@ export interface StreamingOptions {
  * Extracts reasoning text from a stream chunk delta, normalizing the
  * different provider formats (reasoning_content, reasoning, reasoning_details)
  */
-export function extractReasoningFromDelta(delta: NonNullable<OpenRouterStreamChunk['choices']>[0]['delta']): string {
+export function extractReasoningFromDelta(
+  delta: NonNullable<OpenRouterStreamChunk['choices']>[0]['delta'],
+): string {
   if (!delta) return '';
 
   if (typeof delta.reasoning_content === 'string' && delta.reasoning_content) {
