@@ -1,5 +1,6 @@
 import { OpenRouterMessage, StreamingOptions } from '../types';
 import { processStreamingResponse } from '../utils/streaming';
+import { buildReasoningDisablePayload } from '../utils/reasoning';
 import { LLMConfigManager } from './llmConfigManager';
 import { GitHubCopilotService } from './githubCopilot';
 import { ModelInfo, CachedModels } from '../types/llmConfig';
@@ -57,6 +58,18 @@ export class AIService {
         );
       }
 
+      // Build request body; disable reasoning when configured off
+      const body: Record<string, unknown> = {
+        model,
+        messages,
+        stream: true,
+      };
+
+      const activeConfig = await LLMConfigManager.getActiveLLM();
+      if (activeConfig && activeConfig.reasoningEnabled === false) {
+        Object.assign(body, buildReasoningDisablePayload());
+      }
+
       // Original implementation for other providers
       // First, do the streaming request
       const streamResponse = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -65,11 +78,7 @@ export class AIService {
           Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: true,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!streamResponse.ok) {

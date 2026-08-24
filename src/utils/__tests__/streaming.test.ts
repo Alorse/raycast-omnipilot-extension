@@ -1,6 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { extractReasoningFromDelta } from '../../types';
 import { processStreamingResponse } from '../streaming';
+import { buildReasoningDisablePayload } from '../../utils/reasoning';
+
+describe('buildReasoningDisablePayload', () => {
+  it('sends both OpenRouter and effort-based disable conventions', () => {
+    expect(buildReasoningDisablePayload()).toEqual({
+      reasoning: { enabled: false },
+      reasoning_effort: 'none',
+    });
+  });
+});
 
 function sseResponse(lines: string[]): Response {
   const body = lines.join('\n') + '\n';

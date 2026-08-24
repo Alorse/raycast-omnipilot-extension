@@ -187,6 +187,7 @@ export class LLMConfigManager {
       apiKey: original.apiKey,
       model: original.model,
       isDefault: false, // Duplicates are never default
+      reasoningEnabled: original.reasoningEnabled,
     };
 
     return await this.addConfig(duplicate);
