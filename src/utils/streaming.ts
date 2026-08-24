@@ -1,13 +1,15 @@
-import { OpenRouterStreamChunk, TokenUsage } from '../types';
+import { OpenRouterStreamChunk, TokenUsage, extractReasoningFromDelta } from '../types';
 
 /**
- * Processes SSE lines and extracts content chunks
+ * Processes SSE lines and extracts content and reasoning chunks
  */
 function processSSELines(
   buffer: string,
   onChunk: (content: string) => void,
-): { newBuffer: string; fullResponse: string; usage?: TokenUsage } {
+  onReasoningChunk?: (reasoning: string) => void,
+): { newBuffer: string; fullResponse: string; fullReasoning: string; usage?: TokenUsage } {
   let fullResponse = '';
+  let fullReasoning = '';
   let usage: TokenUsage | undefined;
   let newBuffer = buffer;
 
@@ -24,10 +26,17 @@ function processSSELines(
 
       try {
         const parsed: OpenRouterStreamChunk = JSON.parse(data);
-        const content = parsed.choices?.[0]?.delta?.content;
+        const delta = parsed.choices?.[0]?.delta;
+        const content = delta?.content;
         if (content) {
           fullResponse += content;
           onChunk(content);
+        }
+
+        const reasoning = extractReasoningFromDelta(delta);
+        if (reasoning) {
+          fullReasoning += reasoning;
+          onReasoningChunk?.(reasoning);
         }
 
         if (parsed.usage) {
@@ -39,7 +48,7 @@ function processSSELines(
     }
   }
 
-  return { newBuffer, fullResponse, usage };
+  return { newBuffer, fullResponse, fullReasoning, usage };
 }
 
 /**
@@ -48,10 +57,12 @@ function processSSELines(
 async function processNodeStream(
   response: Response,
   onChunk: (content: string) => void,
-): Promise<{ fullResponse: string; usage?: TokenUsage }> {
+  onReasoningChunk?: (reasoning: string) => void,
+): Promise<{ fullResponse: string; fullReasoning: string; usage?: TokenUsage }> {
   const nodeStream = response.body as unknown as AsyncIterable<Buffer>;
   let buffer = '';
   let fullResponse = '';
+  let fullReasoning = '';
   let usage: TokenUsage | undefined;
 
   for await (const chunk of nodeStream) {
@@ -60,15 +71,16 @@ async function processNodeStream(
       : String(chunk);
     buffer += chunkStr;
 
-    const result = processSSELines(buffer, onChunk);
+    const result = processSSELines(buffer, onChunk, onReasoningChunk);
     buffer = result.newBuffer;
     fullResponse += result.fullResponse;
+    fullReasoning += result.fullReasoning;
     if (result.usage) {
       usage = result.usage;
     }
   }
 
-  return { fullResponse, usage };
+  return { fullResponse, fullReasoning, usage };
 }
 
 /**
@@ -77,11 +89,13 @@ async function processNodeStream(
 async function processWebStream(
   response: Response,
   onChunk: (content: string) => void,
-): Promise<{ fullResponse: string; usage?: TokenUsage }> {
+  onReasoningChunk?: (reasoning: string) => void,
+): Promise<{ fullResponse: string; fullReasoning: string; usage?: TokenUsage }> {
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
   let fullResponse = '';
+  let fullReasoning = '';
   let usage: TokenUsage | undefined;
 
   try {
@@ -91,9 +105,10 @@ async function processWebStream(
 
       buffer += decoder.decode(value, { stream: true });
 
-      const result = processSSELines(buffer, onChunk);
+      const result = processSSELines(buffer, onChunk, onReasoningChunk);
       buffer = result.newBuffer;
       fullResponse += result.fullResponse;
+      fullReasoning += result.fullReasoning;
       if (result.usage) {
         usage = result.usage;
       }
@@ -102,19 +117,21 @@ async function processWebStream(
     reader.cancel();
   }
 
-  return { fullResponse, usage };
+  return { fullResponse, fullReasoning, usage };
 }
 
 /**
  * Processes a streaming response from OpenRouter API
  * @param response - The fetch response object
  * @param onChunk - Callback called for each content chunk received
- * @returns Promise that resolves with an object containing the complete response text and token usage
+ * @param onReasoningChunk - Optional callback called for each reasoning chunk received
+ * @returns Promise that resolves with an object containing the complete response text, reasoning text and token usage
  */
 export async function processStreamingResponse(
   response: Response,
   onChunk: (content: string) => void,
-): Promise<{ fullResponse: string; usage?: TokenUsage }> {
+  onReasoningChunk?: (reasoning: string) => void,
+): Promise<{ fullResponse: string; fullReasoning: string; usage?: TokenUsage }> {
   if (!response.body) {
     throw new Error('Response body is not available');
   }
@@ -123,10 +140,10 @@ export async function processStreamingResponse(
     // Check if this is a Node.js readable stream (node-fetch) or web ReadableStream
     if (typeof response.body.getReader !== 'function') {
       // This is a Node.js readable stream
-      return await processNodeStream(response, onChunk);
+      return await processNodeStream(response, onChunk, onReasoningChunk);
     } else {
       // This is a web ReadableStream
-      return await processWebStream(response, onChunk);
+      return await processWebStream(response, onChunk, onReasoningChunk);
     }
   } catch (error) {
     console.error('Error processing streaming response:', error);
