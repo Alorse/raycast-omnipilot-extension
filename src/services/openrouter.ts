@@ -102,15 +102,18 @@ export class AIService {
         throw new Error(errorMessage);
       }
 
-      const { fullResponse, usage } = await processStreamingResponse(
+      const { fullResponse, fullReasoning, usage } = await processStreamingResponse(
         streamResponse,
         (content) => {
           options.onChunk?.(content);
         },
+        (reasoning) => {
+          options.onReasoningChunk?.(reasoning);
+        },
       );
 
-      // Call onComplete with the full response and usage information
-      options.onComplete?.(fullResponse, usage);
+      // Call onComplete with the full response, reasoning and usage information
+      options.onComplete?.(fullResponse, usage, fullReasoning);
 
       return fullResponse;
     } catch (error) {
