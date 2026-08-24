@@ -20,6 +20,8 @@ export function ChatViewList() {
     showReasoning,
     hasReasoning,
     toggleShowReasoning,
+    reasoningEnabled,
+    toggleReasoningEnabled,
   } = useChatLogic();
 
   // Early return AFTER all hooks
@@ -75,6 +77,8 @@ export function ChatViewList() {
                 showReasoning={showReasoning}
                 hasReasoning={hasReasoning}
                 toggleShowReasoning={toggleShowReasoning}
+                reasoningEnabled={reasoningEnabled}
+                toggleReasoningEnabled={toggleReasoningEnabled}
               />
             }
           />

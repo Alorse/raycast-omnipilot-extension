@@ -17,6 +17,10 @@ interface ChatActionsProps {
   hasReasoning?: boolean;
   toggleShowReasoning?: () => void;
 
+  // Reasoning enable/disable for the active LLM
+  reasoningEnabled?: boolean;
+  toggleReasoningEnabled?: () => Promise<void>;
+
   // Optional props for conditional rendering
   conversationId?: string;
 
@@ -34,6 +38,8 @@ export function ChatActions({
   showReasoning = false,
   hasReasoning = false,
   toggleShowReasoning,
+  reasoningEnabled,
+  toggleReasoningEnabled,
   conversationId,
   showConversationSwitch = false,
   handleConversationChange,
@@ -93,6 +99,22 @@ export function ChatActions({
           icon={Icon.LightBulb}
           onAction={toggleShowReasoning}
           shortcut={{ modifiers: ['cmd'], key: 'r' }}
+        />
+      )}
+
+      {/* Enable/disable reasoning on the active LLM configuration */}
+      {toggleReasoningEnabled && (
+        <Action
+          title={
+            reasoningEnabled === false
+              ? 'Enable Reasoning for This LLM'
+              : 'Disable Reasoning for This LLM'
+          }
+          icon={Icon.Cog}
+          onAction={() => {
+            toggleReasoningEnabled();
+          }}
+          shortcut={{ modifiers: ['cmd', 'shift'], key: 'r' }}
         />
       )}
 

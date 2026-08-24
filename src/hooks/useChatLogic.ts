@@ -63,6 +63,7 @@ export function useChatLogic() {
     model: string;
     provider: string;
     configName?: string;
+    reasoningEnabled?: boolean;
   } | null>(null);
 
   const responseStartRef = useRef('');
@@ -80,6 +81,7 @@ export function useChatLogic() {
             model: activeConfig.model,
             provider: getProviderName(activeConfig.apiUrl),
             configName: activeConfig.name,
+            reasoningEnabled: activeConfig.reasoningEnabled,
           });
         }
 
@@ -334,6 +336,47 @@ export function useChatLogic() {
     setShowReasoning((prev) => !prev);
   }, []);
 
+  // Toggle reasoning on/off for the active LLM configuration
+  const handleToggleReasoningEnabled = useCallback(async () => {
+    try {
+      const activeConfig = await LLMConfigManager.getActiveLLM();
+      if (!activeConfig) {
+        showToast({
+          style: Toast.Style.Failure,
+          title: 'No active LLM configuration',
+        });
+        return;
+      }
+
+      const newValue = activeConfig.reasoningEnabled === false ? true : false;
+      await LLMConfigManager.updateConfig(activeConfig.id, {
+        name: activeConfig.name,
+        apiUrl: activeConfig.apiUrl,
+        apiKey: activeConfig.apiKey,
+        model: activeConfig.model,
+        isDefault: activeConfig.isDefault,
+        reasoningEnabled: newValue,
+      });
+
+      setCurrentConfig((prev) =>
+        prev ? { ...prev, model: activeConfig.model } : prev,
+      );
+
+      await showToast({
+        style: Toast.Style.Success,
+        title: newValue ? 'Reasoning enabled' : 'Reasoning disabled',
+        message: `${activeConfig.name} — applies to the next message`,
+      });
+    } catch (error) {
+      console.error('Failed to toggle reasoning:', error);
+      showToast({
+        style: Toast.Style.Failure,
+        title: 'Failed to toggle reasoning',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }, []);
+
   // Build chat content as markdown for better readability
   const buildChatMarkdown = useCallback(() => {
     if (!currentConversation || allMessages.length === 0) {
@@ -405,6 +448,13 @@ export function useChatLogic() {
     // Reasoning visibility
     showReasoning,
     hasReasoning: allMessages.some((m) => m.reasoning),
+
+    // Reasoning enable/disable for the active LLM
+    reasoningEnabled:
+      currentConfig?.reasoningEnabled === undefined
+        ? true
+        : currentConfig.reasoningEnabled,
+    toggleReasoningEnabled: handleToggleReasoningEnabled,
 
     // From hooks
     conversations,

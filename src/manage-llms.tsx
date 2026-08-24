@@ -565,6 +565,14 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         label="Make this the default LLM configuration"
         defaultValue={config?.isDefault || false}
       />
+
+      <Form.Checkbox
+        id="reasoningEnabled"
+        title="Reasoning"
+        label="Enable reasoning/thinking tokens for this model"
+        defaultValue={config?.reasoningEnabled !== false}
+        info="When unchecked, requests ask the provider to skip reasoning, making reasoning models answer faster. Ignored by models that cannot disable reasoning."
+      />
     </Form>
   );
 }
