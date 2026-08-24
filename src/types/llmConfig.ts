@@ -20,6 +20,8 @@ export interface LLMConfig {
   model: string;
   isDefault?: boolean;
   isActive?: boolean;
+  /** Whether reasoning/thinking tokens are requested from the model (default: true) */
+  reasoningEnabled?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   cachedModels?: CachedModels;
@@ -31,6 +33,7 @@ export interface LLMConfigFormData {
   apiKey: string;
   model: string;
   isDefault?: boolean;
+  reasoningEnabled?: boolean;
 }
 
 export const DEFAULT_LLMS: Omit<LLMConfig, 'id' | 'apiKey'>[] = [
