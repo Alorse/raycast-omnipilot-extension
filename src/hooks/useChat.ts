@@ -105,6 +105,7 @@ export function useChat() {
       role: 'user' | 'assistant',
       targetConversationId: string,
       tokenUsage?: TokenUsage,
+      reasoning?: string,
     ): Promise<void> => {
       const targetConversation = state.conversations.find(
         (conv) => conv.id === targetConversationId,
@@ -120,6 +121,7 @@ export function useChat() {
         id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         role,
         content,
+        reasoning: reasoning || undefined,
         timestamp: new Date().toISOString(),
         tokenUsage,
       };

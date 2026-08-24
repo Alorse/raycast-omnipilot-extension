@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { showToast, Toast } from '@raycast/api';
 import {
   createAIServiceFromConfig,
@@ -9,6 +9,8 @@ import { TokenUsage, OpenRouterMessage } from '../types';
 
 interface UseAIStreamingResult {
   response: string;
+  /** Reasoning/thinking tokens streamed by reasoning models */
+  reasoning: string;
   isLoading: boolean;
   error: string | null;
   tokenUsage: TokenUsage | null;
@@ -29,9 +31,51 @@ interface UseAIStreamingResult {
  */
 export function useAIStreaming(): UseAIStreamingResult {
   const [response, setResponse] = useState('');
+  const [reasoning, setReasoning] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null);
+
+  // Keep the latest full reasoning so onComplete consumers can read it
+  const reasoningRef = useRef('');
+
+  const resetStreamState = useCallback(() => {
+    setResponse('');
+    setReasoning('');
+    setTokenUsage(null);
+    reasoningRef.current = '';
+  }, []);
+
+  const makeStreamCallbacks = useCallback(
+    () => ({
+      onChunk: (content: string) => {
+        setResponse((prev) => prev + content);
+      },
+      onReasoningChunk: (chunk: string) => {
+        reasoningRef.current += chunk;
+        setReasoning((prev) => prev + chunk);
+      },
+      onComplete: (fullResponse: string, usage?: TokenUsage) => {
+        if (usage) {
+          setTokenUsage(usage);
+        }
+      },
+      onError: (apiError: Error) => {
+        console.error('Error calling AI API:', apiError);
+        setError(apiError.message);
+        showToast(
+          Toast.Style.Failure,
+          'Failed to get AI response',
+          apiError.message,
+        );
+
+        // Format error message with helpful context
+        const formattedError = formatErrorMessage(apiError.message);
+        setResponse(formattedError);
+      },
+    }),
+    [],
+  );
 
   const askAI = useCallback(
     async (query: string, customPrompt?: string, customModel?: string) => {
@@ -43,8 +87,7 @@ export function useAIStreaming(): UseAIStreamingResult {
 
       setIsLoading(true);
       setError(null);
-      setResponse(''); // Clear previous response
-      setTokenUsage(null); // Clear previous token usage
+      resetStreamState();
 
       await showToast({
         style: Toast.Style.Animated,
@@ -60,29 +103,7 @@ export function useAIStreaming(): UseAIStreamingResult {
           query,
           customPrompt || 'You are a helpful AI assistant.',
           modelToUse,
-          {
-            onChunk: (content: string) => {
-              setResponse((prev) => prev + content);
-            },
-            onComplete: (fullResponse: string, usage?: TokenUsage) => {
-              if (usage) {
-                setTokenUsage(usage);
-              }
-            },
-            onError: (apiError: Error) => {
-              console.error('Error calling AI API:', apiError);
-              setError(apiError.message);
-              showToast(
-                Toast.Style.Failure,
-                'Failed to get AI response',
-                apiError.message,
-              );
-
-              // Format error message with helpful context
-              const formattedError = formatErrorMessage(apiError.message);
-              setResponse(formattedError);
-            },
-          },
+          makeStreamCallbacks(),
         );
       } catch (catchError) {
         const errorMessage =
@@ -107,7 +128,7 @@ export function useAIStreaming(): UseAIStreamingResult {
         });
       }
     },
-    [],
+    [makeStreamCallbacks, resetStreamState],
   );
 
   const chatWithHistory = useCallback(
@@ -120,8 +141,7 @@ export function useAIStreaming(): UseAIStreamingResult {
 
       setIsLoading(true);
       setError(null);
-      setResponse(''); // Clear previous response
-      setTokenUsage(null); // Clear previous token usage
+      resetStreamState();
 
       await showToast({
         style: Toast.Style.Animated,
@@ -133,29 +153,11 @@ export function useAIStreaming(): UseAIStreamingResult {
         const aiService = await createAIServiceFromConfig();
         const modelToUse = customModel || (await getActiveModel());
 
-        await aiService.streamChatCompletion(messages, modelToUse, {
-          onChunk: (content: string) => {
-            setResponse((prev) => prev + content);
-          },
-          onComplete: (fullResponse: string, usage?: TokenUsage) => {
-            if (usage) {
-              setTokenUsage(usage);
-            }
-          },
-          onError: (apiError: Error) => {
-            console.error('Error calling AI API:', apiError);
-            setError(apiError.message);
-            showToast(
-              Toast.Style.Failure,
-              'Failed to get AI response',
-              apiError.message,
-            );
-
-            // Format error message with helpful context
-            const formattedError = formatErrorMessage(apiError.message);
-            setResponse(formattedError);
-          },
-        });
+        await aiService.streamChatCompletion(
+          messages,
+          modelToUse,
+          makeStreamCallbacks(),
+        );
       } catch (catchError) {
         const errorMessage =
           catchError instanceof Error ? catchError.message : String(catchError);
@@ -179,17 +181,17 @@ export function useAIStreaming(): UseAIStreamingResult {
         });
       }
     },
-    [],
+    [makeStreamCallbacks, resetStreamState],
   );
 
   const clearResponse = useCallback(() => {
-    setResponse('');
+    resetStreamState();
     setError(null);
-    setTokenUsage(null);
-  }, []);
+  }, [resetStreamState]);
 
   return {
     response,
+    reasoning,
     isLoading,
     error,
     tokenUsage,

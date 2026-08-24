@@ -12,6 +12,11 @@ interface ChatActionsProps {
   handleCreateConversation: () => Promise<void>;
   handleDeleteConversation: (conversationId: string) => Promise<void>;
 
+  // Reasoning visibility
+  showReasoning?: boolean;
+  hasReasoning?: boolean;
+  toggleShowReasoning?: () => void;
+
   // Optional props for conditional rendering
   conversationId?: string;
 
@@ -26,6 +31,9 @@ export function ChatActions({
   handleSendMessage,
   handleCreateConversation,
   handleDeleteConversation,
+  showReasoning = false,
+  hasReasoning = false,
+  toggleShowReasoning,
   conversationId,
   showConversationSwitch = false,
   handleConversationChange,
@@ -77,6 +85,16 @@ export function ChatActions({
         onAction={handleCreateConversation}
         shortcut={{ modifiers: ['cmd'], key: 'n' }}
       />
+
+      {/* Toggle reasoning visibility - only when a message has reasoning */}
+      {hasReasoning && toggleShowReasoning && (
+        <Action
+          title={showReasoning ? 'Hide Reasoning' : 'Show Reasoning'}
+          icon={Icon.LightBulb}
+          onAction={toggleShowReasoning}
+          shortcut={{ modifiers: ['cmd'], key: 'r' }}
+        />
+      )}
 
       {/* Copy Actions - only show if conversation has messages */}
       {targetConversation && targetConversation.messages.length > 0 && (
