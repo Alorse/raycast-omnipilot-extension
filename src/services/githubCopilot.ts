@@ -149,10 +149,15 @@ export class GitHubCopilotService {
             options.onChunk(content);
           }
         },
+        (reasoning: string) => {
+          if (options.onReasoningChunk) {
+            options.onReasoningChunk(reasoning);
+          }
+        },
       );
 
       if (options.onComplete) {
-        options.onComplete(result.fullResponse, result.usage);
+        options.onComplete(result.fullResponse, result.usage, result.fullReasoning);
       }
 
       return result.fullResponse;
