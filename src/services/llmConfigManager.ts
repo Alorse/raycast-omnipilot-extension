@@ -5,6 +5,7 @@ import {
   DEFAULT_LLMS,
   CachedModels,
 } from '../types/llmConfig';
+import { ReasoningKnowledge } from '../utils/reasoning';
 import { AIService } from './openrouter';
 
 const STORAGE_KEY = 'llm-configurations';
@@ -191,6 +192,33 @@ export class LLMConfigManager {
     };
 
     return await this.addConfig(duplicate);
+  }
+
+  /**
+   * Store what we learned about one model's reasoning controls, so later
+   * requests do not pay for rediscovering it.
+   */
+  static async setReasoningKnowledge(
+    id: string,
+    model: string,
+    knowledge: ReasoningKnowledge,
+  ): Promise<void> {
+    const configs = await this.getAllConfigs();
+    const configIndex = configs.findIndex((c) => c.id === id);
+
+    if (configIndex === -1) {
+      return;
+    }
+
+    configs[configIndex] = {
+      ...configs[configIndex],
+      reasoningKnowledge: {
+        ...configs[configIndex].reasoningKnowledge,
+        [model]: knowledge,
+      },
+    };
+
+    await this.saveConfigs(configs);
   }
 
   /**

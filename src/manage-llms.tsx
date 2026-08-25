@@ -569,9 +569,9 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
       <Form.Checkbox
         id="reasoningEnabled"
         title="Reasoning"
-        label="Enable reasoning/thinking tokens for this model"
+        label="Let this model think"
         defaultValue={config?.reasoningEnabled !== false}
-        info="When unchecked, requests ask the provider to skip reasoning, making reasoning models answer faster. Ignored by models that cannot disable reasoning."
+        info="When unchecked, OmniPilot asks the provider to skip reasoning, making reasoning models answer faster. How that is requested is worked out per model automatically. Some models cannot disable it at all."
       />
     </Form>
   );

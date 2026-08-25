@@ -1,6 +1,13 @@
 import { OpenRouterMessage, StreamingOptions } from '../types';
 import { processStreamingResponse } from '../utils/streaming';
-import { buildReasoningDisablePayload } from '../utils/reasoning';
+import {
+  disablePayloadFor,
+  isReasoningParamError,
+  nextDisableMode,
+  recordFailure,
+  ReasoningDisableMode,
+  ReasoningKnowledge,
+} from '../utils/reasoning';
 import { LLMConfigManager } from './llmConfigManager';
 import { GitHubCopilotService } from './githubCopilot';
 import { ModelInfo, CachedModels } from '../types/llmConfig';
@@ -12,6 +19,8 @@ interface ModelApiResponse {
   object?: string;
   created?: number;
   owned_by?: string;
+  /** Published by OpenRouter and some gateways; see ModelInfo. */
+  supported_parameters?: string[];
 }
 
 interface ModelsApiResponse {
@@ -58,60 +67,109 @@ export class AIService {
         );
       }
 
-      // Build request body; disable reasoning when configured off
-      const body: Record<string, unknown> = {
+      const baseBody: Record<string, unknown> = {
         model,
         messages,
         stream: true,
       };
 
+      // Reasoning is on unless the active configuration turned it off.
+      //
+      // Providers disagree on how it is turned off and reject requests that
+      // carry more than one convention, so exactly one is sent. Which one is
+      // never asked of the user: it comes from what the provider publishes in
+      // /models, and otherwise from trying a candidate and watching what
+      // happens. Two things can go wrong, and both teach us something:
+      //   - the provider rejects the parameter  -> retry now with the next one
+      //   - the provider accepts it and reasons anyway -> remember the failure
+      //     so the next request moves on (a silent no-op cannot be retried
+      //     mid-flight, the answer has already streamed)
+      // Knowledge is kept per model, because one gateway commonly fronts
+      // models that behave differently.
       const activeConfig = await LLMConfigManager.getActiveLLM();
-      if (activeConfig && activeConfig.reasoningEnabled === false) {
-        Object.assign(body, buildReasoningDisablePayload());
-      }
+      const disabling = activeConfig?.reasoningEnabled === false;
+      const supportedParameters = activeConfig?.cachedModels?.models.find(
+        (m) => m.id === model,
+      )?.supported_parameters;
 
-      // Original implementation for other providers
-      // First, do the streaming request
-      const streamResponse = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
+      let knowledge: ReasoningKnowledge | undefined =
+        activeConfig?.reasoningKnowledge?.[model];
 
-      if (!streamResponse.ok) {
-        // Try to extract error message from response body
-        let errorMessage = `HTTP error! status: ${streamResponse.status}`;
-        try {
-          const errorBody = await streamResponse.text();
-          const errorData = JSON.parse(errorBody);
+      const persist = async (next: ReasoningKnowledge) => {
+        knowledge = next;
+        if (activeConfig) {
+          await LLMConfigManager.setReasoningKnowledge(
+            activeConfig.id,
+            model,
+            next,
+          );
+        }
+      };
 
-          // Try to extract a more specific error message
-          const specificMessage = extractErrorMessage(errorData);
-          if (specificMessage) {
-            errorMessage = specificMessage;
-          }
+      let streamResponse: Response | undefined;
+      let attemptedMode: ReasoningDisableMode | null = null;
+      let errorMessage = '';
 
-          // Add status code context if we have a good message
-          if (specificMessage && streamResponse.status !== 200) {
-            errorMessage = `[${streamResponse.status}] ${specificMessage}`;
-          }
-        } catch (parseError) {
-          // If we can't parse the error body, keep the default message
-          console.warn('Could not parse error response:', parseError);
+      for (;;) {
+        const mode = disabling
+          ? nextDisableMode(this.baseUrl, knowledge, supportedParameters)
+          : null;
+        attemptedMode = mode;
+
+        const body = mode
+          ? { ...baseBody, ...disablePayloadFor(mode) }
+          : baseBody;
+
+        const candidate = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (candidate.ok) {
+          streamResponse = candidate;
+          break;
         }
 
-        console.error(
-          'Failed to fetch chat completion:',
-          streamResponse.status,
+        errorMessage = await describeResponseError(candidate);
+
+        // Only a complaint about the reasoning control itself is worth
+        // another round trip; anything else is the user's problem to see.
+        if (!mode || !isReasoningParamError(errorMessage)) {
+          console.error(
+            'Failed to fetch chat completion:',
+            candidate.status,
+            errorMessage,
+          );
+          throw new Error(errorMessage);
+        }
+
+        const updated = recordFailure(
+          this.baseUrl,
+          knowledge,
+          mode,
+          supportedParameters,
+        );
+        await persist(updated);
+
+        if (updated.exhausted) {
+          console.error(
+            'No reasoning-disable convention accepted by provider:',
+            errorMessage,
+          );
+          throw new Error(errorMessage);
+        }
+
+        console.warn(
+          `Provider rejected reasoning mode '${mode}' for ${model}, retrying:`,
           errorMessage,
         );
-        throw new Error(errorMessage);
       }
 
-      const { fullResponse, fullReasoning, usage } =
+            const { fullResponse, fullReasoning, usage } =
         await processStreamingResponse(
           streamResponse,
           (content) => {
@@ -121,6 +179,21 @@ export class AIService {
             options.onReasoningChunk?.(reasoning);
           },
         );
+
+      // The provider accepted the parameter — but did it honour it? Reasoning
+      // arriving anyway proves this convention is a no-op here, so the next
+      // request moves on. The absence of reasoning proves nothing (the model
+      // may simply not have needed to think), so nothing is recorded then.
+      if (disabling && attemptedMode && fullReasoning.length > 0) {
+        await persist(
+          recordFailure(
+            this.baseUrl,
+            knowledge,
+            attemptedMode,
+            supportedParameters,
+          ),
+        );
+      }
 
       // Call onComplete with the full response, reasoning and usage information
       options.onComplete?.(fullResponse, usage, fullReasoning);
@@ -199,6 +272,7 @@ export class AIService {
           object: model.object,
           created: model.created,
           owned_by: model.owned_by,
+          supported_parameters: model.supported_parameters,
         }));
       } else if (apiResponse.data && Array.isArray(apiResponse.data)) {
         // OpenAI/OpenRouter format: { data: [...] }
@@ -207,6 +281,7 @@ export class AIService {
           object: model.object,
           created: model.created,
           owned_by: model.owned_by,
+          supported_parameters: model.supported_parameters,
         }));
       } else if (apiResponse.models && Array.isArray(apiResponse.models)) {
         // Custom format: { models: [...] }
@@ -215,6 +290,7 @@ export class AIService {
           object: model.object,
           created: model.created,
           owned_by: model.owned_by,
+          supported_parameters: model.supported_parameters,
         }));
       }
 
@@ -283,6 +359,29 @@ export async function initializeLLMConfigs(): Promise<void> {
  * @param errorData - The parsed JSON error response
  * @returns A human-readable error message
  */
+/**
+ * Turns a failed response into the most specific message we can show,
+ * prefixed with the status code.
+ */
+async function describeResponseError(response: Response): Promise<string> {
+  let errorMessage = `HTTP error! status: ${response.status}`;
+
+  try {
+    const errorBody = await response.text();
+    const errorData = JSON.parse(errorBody);
+
+    const specificMessage = extractErrorMessage(errorData);
+    if (specificMessage) {
+      errorMessage = `[${response.status}] ${specificMessage}`;
+    }
+  } catch (parseError) {
+    // If we can't parse the error body, keep the default message
+    console.warn('Could not parse error response:', parseError);
+  }
+
+  return errorMessage;
+}
+
 function extractErrorMessage(errorData: unknown): string | null {
   if (!errorData || typeof errorData !== 'object') {
     return null;
