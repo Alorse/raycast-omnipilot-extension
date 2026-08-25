@@ -1,8 +1,15 @@
+import { ReasoningKnowledgeByModel } from '../utils/reasoning';
+
 export interface ModelInfo {
   id: string;
   object?: string;
   created?: number;
   owned_by?: string;
+  /**
+   * Capabilities the endpoint publishes for this model. OpenRouter and some
+   * gateways list them; used to pick a reasoning control without guessing.
+   */
+  supported_parameters?: string[];
 }
 
 export interface CachedModels {
@@ -22,6 +29,11 @@ export interface LLMConfig {
   isActive?: boolean;
   /** Whether reasoning/thinking tokens are requested from the model (default: true) */
   reasoningEnabled?: boolean;
+  /**
+   * What we have worked out per model about how to turn its reasoning off.
+   * Filled in automatically; never asked of the user.
+   */
+  reasoningKnowledge?: ReasoningKnowledgeByModel;
   createdAt?: Date;
   updatedAt?: Date;
   cachedModels?: CachedModels;

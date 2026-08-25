@@ -1,14 +1,152 @@
 import { describe, it, expect } from 'vitest';
 import { extractReasoningFromDelta } from '../../types';
 import { processStreamingResponse } from '../streaming';
-import { buildReasoningDisablePayload } from '../../utils/reasoning';
+import {
+  disablePayloadFor,
+  modesFromSupportedParameters,
+  nextDisableMode,
+  recordFailure,
+  isReasoningParamError,
+} from '../../utils/reasoning';
 
-describe('buildReasoningDisablePayload', () => {
-  it('sends both OpenRouter and effort-based disable conventions', () => {
-    expect(buildReasoningDisablePayload()).toEqual({
+describe('reasoning disable conventions', () => {
+  it('emits exactly one convention per mode', () => {
+    expect(disablePayloadFor('reasoning')).toEqual({
       reasoning: { enabled: false },
-      reasoning_effort: 'none',
     });
+    expect(disablePayloadFor('effort')).toEqual({ reasoning_effort: 'none' });
+    expect(disablePayloadFor('thinking')).toEqual({
+      thinking: { type: 'disabled' },
+    });
+    expect(disablePayloadFor('enableThinking')).toEqual({
+      enable_thinking: false,
+    });
+  });
+
+  it('never emits two conventions at once', () => {
+    for (const mode of ['reasoning', 'effort', 'thinking', 'enableThinking'] as const) {
+      expect(Object.keys(disablePayloadFor(mode))).toHaveLength(1);
+    }
+  });
+});
+
+describe('capability-declared detection', () => {
+  it('reads the convention off supported_parameters', () => {
+    expect(modesFromSupportedParameters(['tools', 'reasoning'])).toEqual([
+      'reasoning',
+    ]);
+    expect(
+      modesFromSupportedParameters(['reasoning_effort', 'max_tokens']),
+    ).toEqual(['effort']);
+  });
+
+  it('reports nothing to try when the list has no reasoning control', () => {
+    expect(modesFromSupportedParameters(['tools', 'max_tokens'])).toEqual([]);
+  });
+
+  it('falls back to provider guessing when nothing is declared', () => {
+    expect(modesFromSupportedParameters(undefined)).toBeNull();
+    expect(modesFromSupportedParameters([])).toBeNull();
+  });
+
+  it('prefers what the endpoint declares over the provider guess', () => {
+    // An OpenRouter model that only takes reasoning_effort
+    const mode = nextDisableMode(
+      'https://openrouter.ai/api/v1',
+      undefined,
+      ['reasoning_effort'],
+    );
+    expect(mode).toBe('effort');
+  });
+
+  it('sends nothing when the model declares no reasoning control', () => {
+    expect(
+      nextDisableMode('https://openrouter.ai/api/v1', undefined, ['tools']),
+    ).toBeNull();
+  });
+});
+
+describe('learning which convention works', () => {
+  it('guesses per provider before anything is known', () => {
+    expect(nextDisableMode('https://openrouter.ai/api/v1')).toBe('reasoning');
+    expect(nextDisableMode('https://api.openai.com/v1')).toBe('effort');
+    expect(nextDisableMode('http://localhost:8317/v1')).toBe('effort');
+  });
+
+  it('advances past a convention that failed', () => {
+    const k = recordFailure('http://localhost:8317/v1', undefined, 'effort');
+    expect(nextDisableMode('http://localhost:8317/v1', k)).toBe(
+      'enableThinking',
+    );
+  });
+
+  it('keeps choosing the same convention while nothing fails', () => {
+    // Stability comes from the absence of failures, not from a stored winner.
+    const k = recordFailure('http://localhost:8317/v1', undefined, 'effort');
+    for (let i = 0; i < 5; i++) {
+      expect(nextDisableMode('http://localhost:8317/v1', k)).toBe(
+        'enableThinking',
+      );
+    }
+  });
+
+  it('does not treat a quiet answer as proof, so the choice cannot oscillate', () => {
+    // A reasoning model answering something trivial emits no reasoning. That
+    // must not pin the convention currently in flight.
+    let k = recordFailure('http://localhost:8317/v1', undefined, 'effort');
+    const chosen = nextDisableMode('http://localhost:8317/v1', k);
+
+    // Any number of quiet responses record nothing at all
+    expect(k.failed).toEqual(['effort']);
+    expect(nextDisableMode('http://localhost:8317/v1', k)).toBe(chosen);
+
+    // Only reasoning arriving anyway moves it on
+    k = recordFailure('http://localhost:8317/v1', k, chosen!);
+    expect(nextDisableMode('http://localhost:8317/v1', k)).not.toBe(chosen);
+  });
+
+  it('gives up once every candidate has failed', () => {
+    let k = recordFailure('https://api.openai.com/v1', undefined, 'effort');
+    expect(k.exhausted).toBe(true);
+    expect(nextDisableMode('https://api.openai.com/v1', k)).toBeNull();
+
+    k = undefined as never;
+    let acc = undefined;
+    for (const mode of ['effort', 'enableThinking', 'reasoning', 'thinking'] as const) {
+      acc = recordFailure('http://localhost:8317/v1', acc, mode);
+    }
+    expect(acc!.exhausted).toBe(true);
+    expect(nextDisableMode('http://localhost:8317/v1', acc)).toBeNull();
+  });
+
+  it('never records a winner, only losers', () => {
+    const k = recordFailure('http://localhost:8317/v1', undefined, 'effort');
+    expect(k).not.toHaveProperty('working');
+    expect(k.failed).toEqual(['effort']);
+  });
+});
+
+describe('telling a reasoning complaint from a real failure', () => {
+  it('recognises provider complaints about reasoning controls', () => {
+    expect(
+      isReasoningParamError(
+        "Conflicting thinking controls: reasoning_effort is 'low', but enable_thinking is False.",
+      ),
+    ).toBe(true);
+    expect(
+      isReasoningParamError(
+        "Only one of 'reasoning' and 'reasoning_effort' may be provided",
+      ),
+    ).toBe(true);
+    expect(
+      isReasoningParamError('thinking.type disabled is not supported'),
+    ).toBe(true);
+  });
+
+  it('does not retry on unrelated failures', () => {
+    expect(isReasoningParamError('Insufficient credits')).toBe(false);
+    expect(isReasoningParamError('invalid api key')).toBe(false);
+    expect(isReasoningParamError('context length exceeded')).toBe(false);
   });
 });
 

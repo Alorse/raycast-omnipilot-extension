@@ -202,6 +202,18 @@ function detectProvider(input: string): ProviderInfo {
 }
 
 /**
+ * Get the provider's stable id (e.g. 'openrouter', 'openai') from an API URL.
+ * Returns 'unknown' for hosts we do not recognise.
+ */
+export function getProviderId(input?: string): string {
+  if (!input) {
+    return DEFAULT_PROVIDER.id;
+  }
+
+  return detectProvider(input).id;
+}
+
+/**
  * Get provider color for UI elements
  * @param input - Provider ID, hostname, or URL
  * @returns Color hex string
