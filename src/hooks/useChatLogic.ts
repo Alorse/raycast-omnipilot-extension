@@ -68,7 +68,6 @@ export function useChatLogic() {
 
   const responseStartRef = useRef('');
   const processingResponseRef = useRef(false);
-  const fullReasoningRef = useRef('');
 
   // Single initialization effect
   useEffect(() => {
@@ -152,12 +151,11 @@ export function useChatLogic() {
           'assistant',
           currentConversation.id,
           tokenUsage || undefined,
-          fullReasoningRef.current || undefined,
+          reasoning || undefined,
         )
           .then(() => {
             clearResponse();
             responseStartRef.current = '';
-            fullReasoningRef.current = '';
             processingResponseRef.current = false;
           })
           .catch((error) => {
@@ -168,6 +166,7 @@ export function useChatLogic() {
     }
   }, [
     response,
+    reasoning,
     isLoading,
     tokenUsage,
     currentConversation,
@@ -208,7 +207,6 @@ export function useChatLogic() {
         // Start AI response
         responseStartRef.current = response;
         processingResponseRef.current = false;
-        fullReasoningRef.current = '';
 
         await chatWithHistory(messages);
       } catch (error) {
@@ -325,13 +323,6 @@ export function useChatLogic() {
     return messages;
   }, [currentMessages, isLoading, response, reasoning]);
 
-  // Keep the full reasoning available for persistence when the response completes
-  useEffect(() => {
-    if (isLoading && reasoning) {
-      fullReasoningRef.current = reasoning;
-    }
-  }, [isLoading, reasoning]);
-
   const toggleShowReasoning = useCallback(() => {
     setShowReasoning((prev) => !prev);
   }, []);
@@ -359,7 +350,7 @@ export function useChatLogic() {
       });
 
       setCurrentConfig((prev) =>
-        prev ? { ...prev, model: activeConfig.model } : prev,
+        prev ? { ...prev, reasoningEnabled: newValue } : prev,
       );
 
       await showToast({
