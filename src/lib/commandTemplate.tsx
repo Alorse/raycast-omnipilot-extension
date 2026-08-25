@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { Detail } from '@raycast/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Action, ActionPanel, Detail, Icon } from '@raycast/api';
 import { useAIStreaming } from '../hooks/useAIStreaming';
 import { useCommandHistory } from '../hooks/useCommandHistory';
 import { LLMConfigManager } from '../services/llmConfigManager';
 import { getProviderName } from '../utils/providers';
+import { buildReasoningBlock } from '../utils/reasoningMarkdown';
 
 interface CommandTemplateProps {
   userQuery: string;
@@ -20,8 +21,10 @@ export function CommandTemplate({
   customModel,
 }: CommandTemplateProps) {
   const hasExecutedRef = useRef(false);
-  const { response, isLoading, tokenUsage, askAI } = useAIStreaming();
+  const { response, reasoning, isLoading, tokenUsage, askAI } =
+    useAIStreaming();
   const { addToHistory } = useCommandHistory();
+  const [showReasoning, setShowReasoning] = useState(false);
   const [currentConfig, setCurrentConfig] = useState<{
     model: string;
     provider: string;
@@ -70,6 +73,13 @@ export function CommandTemplate({
     }
   }, [askAI, query, customPrompt, customModel]);
 
+  // Collapse the reasoning as soon as the final answer starts arriving
+  useEffect(() => {
+    if (response) {
+      setShowReasoning(false);
+    }
+  }, [response]);
+
   // Save to history when response is complete
   useEffect(() => {
     if (response && !isLoading && query && currentConfig) {
@@ -84,14 +94,51 @@ export function CommandTemplate({
     }
   }, [response, isLoading, query, currentConfig, tokenUsage, addToHistory]);
 
+  const toggleShowReasoning = useCallback(() => {
+    setShowReasoning((prev) => !prev);
+  }, []);
+
+  const emptyState = query
+    ? ''
+    : 'No query provided. Please provide a query as an argument.';
+
+  // While a reasoning model is still thinking there is no answer yet, so the
+  // thinking block is all there is to show — otherwise the command looks frozen.
+  const reasoningBlock = buildReasoningBlock({
+    reasoning,
+    isStreaming: isLoading && !response,
+    showReasoning,
+  });
+
+  const markdown = [reasoningBlock, response || emptyState]
+    .filter(Boolean)
+    .join('\n\n');
+
   return (
     <Detail
       isLoading={isLoading}
-      markdown={
-        response ||
-        (query
-          ? ''
-          : 'No query provided. Please provide a query as an argument.')
+      markdown={markdown}
+      actions={
+        <ActionPanel>
+          {response && (
+            <Action.CopyToClipboard title="Copy Response" content={response} />
+          )}
+          {reasoning && (
+            <Action
+              title={showReasoning ? 'Hide Reasoning' : 'Show Reasoning'}
+              icon={Icon.LightBulb}
+              onAction={toggleShowReasoning}
+              shortcut={{ modifiers: ['cmd'], key: 'r' }}
+            />
+          )}
+          {reasoning && (
+            <Action.CopyToClipboard
+              title="Copy Reasoning"
+              content={reasoning}
+              shortcut={{ modifiers: ['cmd', 'shift'], key: 'r' }}
+            />
+          )}
+        </ActionPanel>
       }
     />
   );
