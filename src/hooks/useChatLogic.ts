@@ -6,6 +6,10 @@ import { OpenRouterMessage } from '../types';
 import { ChatMessage } from '../types/chat';
 import { LLMConfigManager } from '../services/llmConfigManager';
 import { getProviderName } from '../utils/providers';
+import {
+  buildReasoningQuote,
+  REASONING_HIDDEN_HINT,
+} from '../utils/reasoningMarkdown';
 
 interface Preferences {
   systemPrompt: string;
@@ -391,12 +395,10 @@ export function useChatLogic() {
         // behind a toggle (Raycast markdown has no <details> support).
         if (message.reasoning) {
           const isStreaming = message.id === 'streaming' && isLoading;
-          if (isStreaming || showReasoning) {
-            const quoted = message.reasoning.replace(/\n/g, '\n> ');
-            block += `\n\n> 🧠 **${isStreaming ? 'Thinking…' : 'Reasoning'}**\n>\n> ${quoted}`;
-          } else {
-            block += ` *(🧠 reasoning hidden — ⌘R to toggle)*`;
-          }
+          block +=
+            isStreaming || showReasoning
+              ? `\n\n${buildReasoningQuote(message.reasoning, isStreaming)}`
+              : ` ${REASONING_HIDDEN_HINT}`;
         }
 
         block += `\n\n${message.content}\n\n---`;
