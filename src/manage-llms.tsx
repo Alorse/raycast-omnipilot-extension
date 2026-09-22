@@ -19,6 +19,7 @@ import {
   getProviderColor,
 } from './utils/providers';
 import { validateLLMConfig } from './utils/llmStatus';
+import { buildCurlCommand } from './utils/curl';
 import { LLMConfigManager } from './services/llmConfigManager';
 
 export default function ManageLLMs() {
@@ -291,6 +292,12 @@ export default function ManageLLMs() {
                     title="Copy Current Model"
                     content={config.model}
                     icon={Icon.Clipboard}
+                  />
+                  <Action.CopyToClipboard
+                    title="Copy cURL"
+                    content={buildCurlCommand(config)}
+                    icon={Icon.Terminal}
+                    shortcut={{ modifiers: ['cmd', 'shift'], key: 'c' }}
                   />
                 </ActionPanel.Section>
                 <ActionPanel.Section>
