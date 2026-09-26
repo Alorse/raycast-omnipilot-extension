@@ -54,6 +54,15 @@ export interface ReasoningKnowledge {
   failed?: ReasoningDisableMode[];
   /** Every candidate has failed; there is nothing left to send. */
   exhausted?: boolean;
+  /** Effort conventions the provider rejected. */
+  effortFailed?: ReasoningEffortMode[];
+  /**
+   * No effort convention is accepted, so none is sent and the model uses its
+   * own default.
+   */
+  effortExhausted?: boolean;
+  /** Effort levels the provider said it accepts, read from its rejection. */
+  supportedEfforts?: string[];
 }
 
 /** Knowledge for every model of one configuration, keyed by model id. */
@@ -171,4 +180,191 @@ export function isReasoningParamError(message: string): boolean {
     m.includes('cannot be') ||
     m.includes('must be')
   );
+}
+
+/** The effort levels a user can pick for a configuration. */
+export type ReasoningEffort = 'low' | 'medium' | 'high';
+
+/**
+ * Every effort name providers publish, lowest first. Wider than what the user
+ * picks from, because a model's own list (e.g. `minimal`–`xhigh`) is what a
+ * choice gets moved onto.
+ */
+const EFFORT_SCALE = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+
+/**
+ * The vendor conventions for asking for an effort level. Like the disable
+ * conventions, exactly one is ever sent.
+ */
+export type ReasoningEffortMode =
+  | 'reasoning'
+  | 'effort'
+  | 'thinkingBudget'
+  | 'qwenBudget';
+
+/**
+ * Thinking budgets for providers that take tokens instead of a level. There is
+ * no published standard; these sit in the range LiteLLM and Cherry Studio use.
+ */
+const BUDGET_TOKENS: Record<string, number> = {
+  minimal: 1024,
+  low: 2048,
+  medium: 8192,
+  high: 16384,
+  xhigh: 24576,
+  max: 32768,
+};
+
+/** Room left for the answer on top of an Anthropic thinking budget. */
+const ANSWER_TOKENS = 16384;
+
+/** The request-body fragment asking for one effort level. */
+export function effortPayloadFor(
+  mode: ReasoningEffortMode,
+  effort: string,
+): Record<string, unknown> {
+  const budget = BUDGET_TOKENS[effort] ?? BUDGET_TOKENS.medium;
+  switch (mode) {
+    case 'reasoning':
+      // OpenRouter's documented shape
+      return { reasoning: { effort } };
+    case 'effort':
+      // OpenAI-style, also Gemini, xAI, DeepSeek, Mistral and most gateways
+      return { reasoning_effort: effort };
+    case 'thinkingBudget':
+      // Anthropic's OpenAI-compatible endpoint ignores reasoning_effort, and
+      // rejects a budget that is not below max_tokens
+      return {
+        thinking: { type: 'enabled', budget_tokens: budget },
+        max_tokens: budget + ANSWER_TOKENS,
+      };
+    case 'qwenBudget':
+      // Alibaba DashScope (Qwen)
+      return { enable_thinking: true, thinking_budget: budget };
+  }
+}
+
+/** Ordered guesses for a provider, used when it does not declare capabilities. */
+function providerEffortCandidates(apiUrl: string): ReasoningEffortMode[] {
+  switch (getProviderId(apiUrl)) {
+    case 'openrouter':
+      return ['reasoning', 'effort'];
+    case 'anthropic':
+      return ['thinkingBudget'];
+    case 'alibaba':
+      return ['qwenBudget', 'effort'];
+    default:
+      // reasoning_effort is the one convention nearly everyone understands
+      return ['effort'];
+  }
+}
+
+/**
+ * The effort conventions a /models capability list allows, or null when the
+ * endpoint publishes none.
+ */
+export function effortModesFromSupportedParameters(
+  supportedParameters?: string[],
+): ReasoningEffortMode[] | null {
+  if (!supportedParameters || supportedParameters.length === 0) {
+    return null;
+  }
+
+  const declared = new Set(supportedParameters.map((p) => p.toLowerCase()));
+  const modes: ReasoningEffortMode[] = [];
+
+  if (declared.has('reasoning')) modes.push('reasoning');
+  if (declared.has('reasoning_effort')) modes.push('effort');
+  if (declared.has('thinking')) modes.push('thinkingBudget');
+  if (declared.has('thinking_budget')) modes.push('qwenBudget');
+
+  return modes;
+}
+
+/** The effort convention to use next, or null when none is left worth trying. */
+export function nextEffortMode(
+  apiUrl: string,
+  knowledge?: ReasoningKnowledge,
+  supportedParameters?: string[],
+): ReasoningEffortMode | null {
+  if (knowledge?.effortExhausted) {
+    return null;
+  }
+
+  const declared = effortModesFromSupportedParameters(supportedParameters);
+  const candidates = declared ?? providerEffortCandidates(apiUrl);
+  const failed = new Set(knowledge?.effortFailed ?? []);
+
+  return candidates.find((mode) => !failed.has(mode)) ?? null;
+}
+
+/** Records an effort convention the provider rejected. */
+export function recordEffortFailure(
+  apiUrl: string,
+  knowledge: ReasoningKnowledge | undefined,
+  mode: ReasoningEffortMode,
+  supportedParameters?: string[],
+): ReasoningKnowledge {
+  const effortFailed = Array.from(
+    new Set([...(knowledge?.effortFailed ?? []), mode]),
+  );
+  const next: ReasoningKnowledge = { ...knowledge, effortFailed };
+
+  next.effortExhausted =
+    nextEffortMode(apiUrl, { effortFailed }, supportedParameters) === null;
+
+  return next;
+}
+
+/**
+ * Moves a chosen level onto what the model accepts: kept when supported,
+ * otherwise the nearest one (ties go up, as Cherry Studio does). Null when the
+ * model accepts no level at all. An unknown list leaves the choice untouched.
+ */
+export function clampEffort(
+  effort: string,
+  supported?: string[],
+): string | null {
+  if (!supported) {
+    return effort;
+  }
+
+  const rank = (e: string) => EFFORT_SCALE.indexOf(e);
+  const usable = supported.filter((e) => rank(e) >= 0);
+  if (usable.includes(effort)) {
+    return effort;
+  }
+
+  const target = rank(effort);
+  const nearest = [...usable].sort(
+    (a, b) =>
+      Math.abs(rank(a) - target) - Math.abs(rank(b) - target) ||
+      rank(b) - rank(a),
+  );
+  return nearest[0] ?? null;
+}
+
+/** The lowest level a model accepts — what "off" becomes when it cannot be. */
+export function lowestEffort(supported?: string[]): string | null {
+  const usable = (supported ?? []).filter((e) => EFFORT_SCALE.includes(e));
+  usable.sort((a, b) => EFFORT_SCALE.indexOf(a) - EFFORT_SCALE.indexOf(b));
+  return usable[0] ?? null;
+}
+
+/**
+ * Reads the accepted levels out of a rejection that lists them, as OpenAI's
+ * does: "Unsupported value: 'reasoning_effort' does not support 'none' with
+ * this model. Supported values are: 'minimal', 'low', 'medium', and 'high'."
+ */
+export function parseSupportedEfforts(message: string): string[] | null {
+  const match = /supported values are:?(.*)/i.exec(message);
+  if (!match) {
+    return null;
+  }
+
+  const values = Array.from(match[1].matchAll(/'([a-z]+)'/gi), (m) =>
+    m[1].toLowerCase(),
+  ).filter((v) => EFFORT_SCALE.includes(v));
+
+  return values.length ? values : null;
 }
