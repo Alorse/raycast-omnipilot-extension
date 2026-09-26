@@ -189,6 +189,7 @@ export class LLMConfigManager {
       model: original.model,
       isDefault: false, // Duplicates are never default
       reasoningEnabled: original.reasoningEnabled,
+      reasoningEffort: original.reasoningEffort,
     };
 
     return await this.addConfig(duplicate);

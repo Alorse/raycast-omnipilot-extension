@@ -1,4 +1,4 @@
-import { ReasoningKnowledgeByModel } from '../utils/reasoning';
+import { ReasoningEffort, ReasoningKnowledgeByModel } from '../utils/reasoning';
 
 export interface ModelInfo {
   id: string;
@@ -10,6 +10,18 @@ export interface ModelInfo {
    * gateways list them; used to pick a reasoning control without guessing.
    */
   supported_parameters?: string[];
+  /**
+   * How the model reasons, as OpenRouter publishes it: the effort levels it
+   * accepts and whether thinking can be turned off at all.
+   */
+  reasoning?: ModelReasoningInfo;
+}
+
+export interface ModelReasoningInfo {
+  supported_efforts?: string[];
+  default_effort?: string;
+  /** Thinking cannot be turned off. */
+  mandatory?: boolean;
 }
 
 export interface CachedModels {
@@ -30,6 +42,11 @@ export interface LLMConfig {
   /** Whether reasoning/thinking tokens are requested from the model (default: true) */
   reasoningEnabled?: boolean;
   /**
+   * How hard the model should think while reasoning is on. 'default' (or
+   * unset) sends nothing and leaves it to the model.
+   */
+  reasoningEffort?: ReasoningEffort | 'default';
+  /**
    * What we have worked out per model about how to turn its reasoning off.
    * Filled in automatically; never asked of the user.
    */
@@ -46,6 +63,7 @@ export interface LLMConfigFormData {
   model: string;
   isDefault?: boolean;
   reasoningEnabled?: boolean;
+  reasoningEffort?: ReasoningEffort | 'default';
 }
 
 export const DEFAULT_LLMS: Omit<LLMConfig, 'id' | 'apiKey'>[] = [

@@ -20,6 +20,7 @@ import {
 } from './utils/providers';
 import { validateLLMConfig } from './utils/llmStatus';
 import { buildCurlCommand } from './utils/curl';
+import { ReasoningEffort } from './utils/reasoning';
 import { LLMConfigManager } from './services/llmConfigManager';
 
 export default function ManageLLMs() {
@@ -332,6 +333,33 @@ export default function ManageLLMs() {
   );
 }
 
+/** The Reasoning dropdown: reasoning off, or on at a given effort. */
+type ReasoningSetting = 'default' | 'off' | ReasoningEffort;
+
+type LLMFormValues = Omit<
+  LLMConfigFormData,
+  'reasoningEnabled' | 'reasoningEffort'
+> & { reasoning: ReasoningSetting };
+
+function reasoningSettingOf(config?: LLMConfig): ReasoningSetting {
+  if (config?.reasoningEnabled === false) {
+    return 'off';
+  }
+  return config?.reasoningEffort ?? 'default';
+}
+
+/**
+ * Off is kept apart from the effort so the chat's reasoning toggle can turn
+ * it back on at the level chosen here.
+ */
+function reasoningFieldsOf(
+  setting: ReasoningSetting,
+): Pick<LLMConfigFormData, 'reasoningEnabled' | 'reasoningEffort'> {
+  return setting === 'off'
+    ? { reasoningEnabled: false }
+    : { reasoningEnabled: true, reasoningEffort: setting };
+}
+
 interface LLMConfigFormProps {
   config?: LLMConfig;
   onSave:
@@ -395,7 +423,12 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
     }
   };
 
-  const handleSubmit = async (values: LLMConfigFormData) => {
+  const handleSubmit = async ({ reasoning, ...fields }: LLMFormValues) => {
+    const values: LLMConfigFormData = {
+      ...fields,
+      ...reasoningFieldsOf(reasoning),
+    };
+
     try {
       setIsLoading(true);
 
@@ -573,13 +606,18 @@ function LLMConfigForm({ config, onSave }: LLMConfigFormProps) {
         defaultValue={config?.isDefault || false}
       />
 
-      <Form.Checkbox
-        id="reasoningEnabled"
+      <Form.Dropdown
+        id="reasoning"
         title="Reasoning"
-        label="Let this model think"
-        defaultValue={config?.reasoningEnabled !== false}
-        info="When unchecked, OmniPilot asks the provider to skip reasoning, making reasoning models answer faster. How that is requested is worked out per model automatically. Some models cannot disable it at all."
-      />
+        defaultValue={reasoningSettingOf(config)}
+        info="How hard the model thinks. Default leaves it to the model. Off asks it to skip reasoning, making reasoning models answer faster. How each level is requested is worked out per model automatically; a level the model does not accept is moved to the nearest one it does, or left to the model's default. Some models cannot turn reasoning off and use their lowest level instead."
+      >
+        <Form.Dropdown.Item value="default" title="Default" />
+        <Form.Dropdown.Item value="off" title="Off" />
+        <Form.Dropdown.Item value="low" title="Low" />
+        <Form.Dropdown.Item value="medium" title="Medium" />
+        <Form.Dropdown.Item value="high" title="High" />
+      </Form.Dropdown>
     </Form>
   );
 }

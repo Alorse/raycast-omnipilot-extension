@@ -22,10 +22,7 @@ import { AIService } from '../openrouter';
 const CONFIG_KEY = 'llm-configurations';
 const ACTIVE_KEY = 'active-llm-id';
 
-function seed(
-  apiUrl: string,
-  extra: Record<string, unknown> = {},
-) {
+function seed(apiUrl: string, extra: Record<string, unknown> = {}) {
   store.clear();
   store.set(
     CONFIG_KEY,
@@ -235,8 +232,14 @@ describe('reasoning disabled', () => {
     });
 
     const svc = new AIService('sk-test', 'http://localhost:8317/v1');
-    await svc.streamChatCompletion([{ role: 'user', content: 'hi' }], 'glm-5.3');
-    await svc.streamChatCompletion([{ role: 'user', content: 'hi' }], 'glm-5.3');
+    await svc.streamChatCompletion(
+      [{ role: 'user', content: 'hi' }],
+      'glm-5.3',
+    );
+    await svc.streamChatCompletion(
+      [{ role: 'user', content: 'hi' }],
+      'glm-5.3',
+    );
 
     await svc.streamChatCompletion(
       [{ role: 'user', content: 'hi' }],
@@ -343,5 +346,197 @@ describe('GitHub Copilot path', () => {
 
     expect(sent[0]?.reasoning).toBeUndefined();
     expect(sent[0]?.reasoning_effort).toBeUndefined();
+  });
+});
+
+describe('reasoning effort', () => {
+  const capture =
+    (respond: (body: Record<string, unknown>) => Response) =>
+    async (_u: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string);
+      sent.push(body);
+      return respond(body);
+    };
+
+  it('sends nothing when the effort is Default', async () => {
+    seed('https://api.openai.com/v1', { reasoningEffort: 'default' });
+    vi.stubGlobal(
+      'fetch',
+      capture(() => sseOk()),
+    );
+
+    await run('https://api.openai.com/v1');
+
+    expect(sent).toHaveLength(1);
+    expect(sent[0].reasoning_effort).toBeUndefined();
+    expect(sent[0].reasoning).toBeUndefined();
+  });
+
+  it('uses reasoning.effort on OpenRouter', async () => {
+    seed('https://openrouter.ai/api/v1', { reasoningEffort: 'high' });
+    vi.stubGlobal(
+      'fetch',
+      capture(() => sseOk()),
+    );
+
+    await run('https://openrouter.ai/api/v1');
+
+    expect(sent[0].reasoning).toEqual({ effort: 'high' });
+    expect(sent[0].reasoning_effort).toBeUndefined();
+  });
+
+  it('uses reasoning_effort on OpenAI-style providers', async () => {
+    seed('https://api.x.ai/v1', { reasoningEffort: 'low' });
+    vi.stubGlobal(
+      'fetch',
+      capture(() => sseOk()),
+    );
+
+    await run('https://api.x.ai/v1');
+
+    expect(sent[0].reasoning_effort).toBe('low');
+  });
+
+  it('uses a thinking budget on Anthropic, below max_tokens', async () => {
+    seed('https://api.anthropic.com/v1', { reasoningEffort: 'medium' });
+    vi.stubGlobal(
+      'fetch',
+      capture(() => sseOk()),
+    );
+
+    await run('https://api.anthropic.com/v1');
+
+    const thinking = sent[0].thinking as { budget_tokens: number };
+    expect(thinking).toEqual({ type: 'enabled', budget_tokens: 8192 });
+    expect(sent[0].max_tokens as number).toBeGreaterThan(
+      thinking.budget_tokens,
+    );
+    expect(sent[0].reasoning_effort).toBeUndefined();
+  });
+
+  it('moves the level onto what the model publishes', async () => {
+    seed('https://openrouter.ai/api/v1', {
+      reasoningEffort: 'low',
+      cachedModels: {
+        isAvailable: true,
+        lastUpdated: new Date().toISOString(),
+        models: [
+          {
+            id: 'glm-5.3',
+            supported_parameters: ['reasoning', 'include_reasoning'],
+            reasoning: { supported_efforts: ['medium', 'high', 'xhigh'] },
+          },
+        ],
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      capture(() => sseOk()),
+    );
+
+    await run('https://openrouter.ai/api/v1');
+
+    expect(sent[0].reasoning).toEqual({ effort: 'medium' });
+  });
+
+  it('retries with the nearest level the provider lists in its rejection', async () => {
+    seed('https://api.openai.com/v1', { reasoningEffort: 'high' });
+    vi.stubGlobal(
+      'fetch',
+      capture((body) =>
+        body.reasoning_effort === 'high'
+          ? errorResponse(
+              400,
+              "Unsupported value: 'reasoning_effort' does not support 'high' with this model. Supported values are: 'minimal', 'low', and 'medium'.",
+            )
+          : sseOk(),
+      ),
+    );
+
+    const out = await run('https://api.openai.com/v1');
+
+    expect(out).toBe('hi');
+    expect(sent.map((b) => b.reasoning_effort)).toEqual(['high', 'medium']);
+    expect(
+      savedConfig().reasoningKnowledge['glm-5.3'].supportedEfforts,
+    ).toEqual(['minimal', 'low', 'medium']);
+
+    // Learned: the next request goes straight to the accepted level
+    sent = [];
+    await run('https://api.openai.com/v1');
+    expect(sent).toHaveLength(1);
+    expect(sent[0].reasoning_effort).toBe('medium');
+  });
+
+  it('falls back to the model default when no effort is accepted', async () => {
+    seed('http://localhost:8317/v1', { reasoningEffort: 'high' });
+    vi.stubGlobal(
+      'fetch',
+      capture((body) =>
+        'reasoning_effort' in body
+          ? errorResponse(400, 'Unknown parameter: reasoning_effort')
+          : sseOk(),
+      ),
+    );
+
+    const out = await run('http://localhost:8317/v1');
+
+    expect(out).toBe('hi');
+    expect(sent).toHaveLength(2);
+    expect(sent[1].reasoning_effort).toBeUndefined();
+    expect(savedConfig().reasoningKnowledge['glm-5.3'].effortExhausted).toBe(
+      true,
+    );
+
+    // Remembered: no more wasted round trips
+    sent = [];
+    await run('http://localhost:8317/v1');
+    expect(sent).toHaveLength(1);
+    expect(sent[0].reasoning_effort).toBeUndefined();
+  });
+
+  it('ignores the effort while reasoning is off', async () => {
+    seed('https://openrouter.ai/api/v1', {
+      reasoningEnabled: false,
+      reasoningEffort: 'high',
+    });
+    vi.stubGlobal(
+      'fetch',
+      capture(() => sseOk()),
+    );
+
+    await run('https://openrouter.ai/api/v1');
+
+    expect(sent[0].reasoning).toEqual({ enabled: false });
+  });
+
+  it('asks for the lowest level when thinking cannot be turned off', async () => {
+    seed('https://openrouter.ai/api/v1', {
+      reasoningEnabled: false,
+      cachedModels: {
+        isAvailable: true,
+        lastUpdated: new Date().toISOString(),
+        models: [
+          {
+            id: 'glm-5.3',
+            supported_parameters: ['reasoning'],
+            reasoning: {
+              mandatory: true,
+              supported_efforts: ['max', 'high', 'low'],
+            },
+          },
+        ],
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      capture(() => sseOk({ reasons: true })),
+    );
+
+    await run('https://openrouter.ai/api/v1');
+
+    expect(sent[0].reasoning).toEqual({ effort: 'low' });
+    // Thinking is expected here, so it is not taken as a failed disable
+    expect(savedConfig().reasoningKnowledge?.['glm-5.3']).toBeUndefined();
   });
 });

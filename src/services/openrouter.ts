@@ -1,16 +1,26 @@
 import { OpenRouterMessage, StreamingOptions } from '../types';
 import { processStreamingResponse } from '../utils/streaming';
 import {
+  clampEffort,
   disablePayloadFor,
+  effortPayloadFor,
   isReasoningParamError,
+  lowestEffort,
   nextDisableMode,
+  nextEffortMode,
+  parseSupportedEfforts,
+  recordEffortFailure,
   recordFailure,
   ReasoningDisableMode,
   ReasoningKnowledge,
 } from '../utils/reasoning';
 import { LLMConfigManager } from './llmConfigManager';
 import { GitHubCopilotService } from './githubCopilot';
-import { ModelInfo, CachedModels } from '../types/llmConfig';
+import {
+  ModelInfo,
+  CachedModels,
+  ModelReasoningInfo,
+} from '../types/llmConfig';
 
 // Types for API responses
 interface ModelApiResponse {
@@ -21,11 +31,34 @@ interface ModelApiResponse {
   owned_by?: string;
   /** Published by OpenRouter and some gateways; see ModelInfo. */
   supported_parameters?: string[];
+  reasoning?: unknown;
 }
 
 interface ModelsApiResponse {
   data?: ModelApiResponse[];
   models?: ModelApiResponse[];
+}
+
+/**
+ * Keeps the part of a model's `reasoning` object we use. Only OpenRouter
+ * publishes it; anything else is dropped.
+ */
+function toReasoningInfo(raw: unknown): ModelReasoningInfo | undefined {
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+
+  const r = raw as Record<string, unknown>;
+  const efforts = Array.isArray(r.supported_efforts)
+    ? r.supported_efforts.filter((e): e is string => typeof e === 'string')
+    : undefined;
+
+  return {
+    supported_efforts: efforts,
+    default_effort:
+      typeof r.default_effort === 'string' ? r.default_effort : undefined,
+    mandatory: r.mandatory === true,
+  };
 }
 
 /**
@@ -87,10 +120,30 @@ export class AIService {
       // Knowledge is kept per model, because one gateway commonly fronts
       // models that behave differently.
       const activeConfig = await LLMConfigManager.getActiveLLM();
-      const disabling = activeConfig?.reasoningEnabled === false;
-      const supportedParameters = activeConfig?.cachedModels?.models.find(
+      const modelInfo = activeConfig?.cachedModels?.models.find(
         (m) => m.id === model,
-      )?.supported_parameters;
+      );
+      const supportedParameters = modelInfo?.supported_parameters;
+      const declaredEfforts = modelInfo?.reasoning?.supported_efforts;
+
+      // A model whose thinking cannot be turned off (the provider says so)
+      // gets its lowest effort instead of a disable request that would fail.
+      const cannotDisable = modelInfo?.reasoning?.mandatory === true;
+      const turnedOff = activeConfig?.reasoningEnabled === false;
+      const disabling = turnedOff && !cannotDisable;
+
+      // The effort to ask for, or null to leave it to the model. Like the
+      // disable conventions, how it is asked for is worked out per model: from
+      // what the provider declares, then from what it rejects. When nothing is
+      // accepted, nothing is sent and the model uses its own default.
+      const chosenEffort = activeConfig?.reasoningEffort;
+      const wantedEffort: string | null = turnedOff
+        ? cannotDisable
+          ? lowestEffort(declaredEfforts)
+          : null
+        : chosenEffort && chosenEffort !== 'default'
+          ? chosenEffort
+          : null;
 
       let knowledge: ReasoningKnowledge | undefined =
         activeConfig?.reasoningKnowledge?.[model];
@@ -116,9 +169,23 @@ export class AIService {
           : null;
         attemptedMode = mode;
 
+        const effortMode = wantedEffort
+          ? nextEffortMode(this.baseUrl, knowledge, supportedParameters)
+          : null;
+        // What the provider told us beats what it published
+        const effort =
+          effortMode && wantedEffort
+            ? clampEffort(
+                wantedEffort,
+                knowledge?.supportedEfforts ?? declaredEfforts,
+              )
+            : null;
+
         const body = mode
           ? { ...baseBody, ...disablePayloadFor(mode) }
-          : baseBody;
+          : effortMode && effort
+            ? { ...baseBody, ...effortPayloadFor(effortMode, effort) }
+            : baseBody;
 
         const candidate = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
@@ -138,7 +205,8 @@ export class AIService {
 
         // Only a complaint about the reasoning control itself is worth
         // another round trip; anything else is the user's problem to see.
-        if (!mode || !isReasoningParamError(errorMessage)) {
+        const sentControl = mode || (effortMode && effort);
+        if (!sentControl || !isReasoningParamError(errorMessage)) {
           console.error(
             'Failed to fetch chat completion:',
             candidate.status,
@@ -147,10 +215,35 @@ export class AIService {
           throw new Error(errorMessage);
         }
 
+        if (effortMode && effort && wantedEffort) {
+          // The level was wrong, not the parameter: a rejection that lists the
+          // accepted levels lets us retry with the nearest one.
+          const accepted = parseSupportedEfforts(errorMessage);
+          if (accepted && clampEffort(wantedEffort, accepted) !== effort) {
+            await persist({ ...knowledge, supportedEfforts: accepted });
+          } else {
+            // Out of conventions the effort is simply dropped — the next
+            // round sends none and the model thinks at its default.
+            await persist(
+              recordEffortFailure(
+                this.baseUrl,
+                knowledge,
+                effortMode,
+                supportedParameters,
+              ),
+            );
+          }
+          console.warn(
+            `Provider rejected reasoning effort '${effort}' (${effortMode}) for ${model}, retrying:`,
+            errorMessage,
+          );
+          continue;
+        }
+
         const updated = recordFailure(
           this.baseUrl,
           knowledge,
-          mode,
+          mode as ReasoningDisableMode,
           supportedParameters,
         );
         await persist(updated);
@@ -169,7 +262,7 @@ export class AIService {
         );
       }
 
-            const { fullResponse, fullReasoning, usage } =
+      const { fullResponse, fullReasoning, usage } =
         await processStreamingResponse(
           streamResponse,
           (content) => {
@@ -273,6 +366,7 @@ export class AIService {
           created: model.created,
           owned_by: model.owned_by,
           supported_parameters: model.supported_parameters,
+          reasoning: toReasoningInfo(model.reasoning),
         }));
       } else if (apiResponse.data && Array.isArray(apiResponse.data)) {
         // OpenAI/OpenRouter format: { data: [...] }
@@ -282,6 +376,7 @@ export class AIService {
           created: model.created,
           owned_by: model.owned_by,
           supported_parameters: model.supported_parameters,
+          reasoning: toReasoningInfo(model.reasoning),
         }));
       } else if (apiResponse.models && Array.isArray(apiResponse.models)) {
         // Custom format: { models: [...] }
@@ -291,6 +386,7 @@ export class AIService {
           created: model.created,
           owned_by: model.owned_by,
           supported_parameters: model.supported_parameters,
+          reasoning: toReasoningInfo(model.reasoning),
         }));
       }
 
